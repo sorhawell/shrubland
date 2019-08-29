@@ -3,8 +3,8 @@ library(randomForest)
 set.seed(1)
 makeXY = function(N=1000) {
   out = list()
-  out$X = data.frame(replicate(5,runif(N)))
-  out$y = with(out$X,X1 + sin(X2) + 5 * X3*X4)
+  out$X = data.frame(replicate(5,rnorm(N)))
+  out$y = with(out$X,X1 + sin(X2) + 1 * X3*X4)
   return(out)
 }
 train = makeXY();
