@@ -6,11 +6,89 @@
 #include <vector>
 #include <random>
 #include <chrono>
+#include <iomanip>
 #include "Profileapi.h"
 
 using namespace std;
 
+
 void error(string e) {throw runtime_error(e);}
+
+
+template <class T, class S>
+class dynamic_vector {
+    T* dyn_vec;
+    T* j;
+    S sz;
+    
+
+    public:
+    dynamic_vector(T* begin, S size):
+    sz(size), dyn_vec(begin), j(begin){};
+    
+    T at(S i){
+        if(i>=sz) error("bound exceeded");
+        return(*(dyn_vec+i));
+    }
+
+    T get(S i){
+        return(*(dyn_vec+i));
+    }
+
+    T* get_cell_ref() {
+        return(dyn_vec);
+    }
+
+    T next() {
+        if(j-dyn_vec>=sz) error("bound exceeded");
+        *(j++);
+    }
+
+};
+
+template <class T, class S>
+class dynamic_array{
+    
+    T* dyn_array;
+    T* j;
+    S n_row;
+    S n_col;
+    S sz;
+    S j_col;
+    S j_row;
+    
+
+    public:
+    dynamic_array(T* begin, S size, S ncol):
+    dyn_array(begin), n_row(size/ncol), n_col(ncol), sz(size), j_col(0), j_row(0), j(begin) {};
+
+    T at(S i_row,S i_col) {
+        if(i_row>=n_row||i_col>=n_col) error("bounds exceeded");
+        return(*(dyn_array+i_row+(i_col*n_row)));
+    }
+
+    T get(S i_row,S i_col) {
+        if(i_row>=n_row||i_col>=n_col) error("bounds exceeded");
+        return(*(dyn_array+i_row+(i_col*n_row)));
+    };
+
+    T next() {*(j++);}
+    T prev() {*(--j);}
+
+    T* get_col_p(S i_col) {
+        return(dyn_array+(i_col*n_row));
+    }
+
+    dynamic_vector<T,S> get_vector(S i_col) {
+        dynamic_vector<T,S> dyn_vec(dyn_array+i_col*n_row,n_row);
+        return(dyn_vec);
+    }
+    void print() {
+        cout << "\nnrow:" << n_row << "ncol: " << n_col << "size: " << sz << '\n';
+    }
+};
+
+
 
 struct CPUtimer {    
     CPUtimer():
@@ -73,6 +151,7 @@ template <class T,int Tnrow, int Tncol> struct matrix{
     void resize(int rows, int cols);
     void fill(T value);
     void erase_col(int from,int to);
+
 };
 
 template <class T,int Tnrow, int Tncol>
@@ -238,11 +317,12 @@ struct Forest {
     int n_nodes;
     int n_trees;
     int i_node;
+    int n_nodes_i_tree;
     int i_tree;
     node nodes[Tnnode];
     int tree_index[Tntree];
     
-    Forest() : n_nodes(Tnnode), n_trees(Tntree), i_node(0), i_tree(0) {
+    Forest() : n_nodes(Tnnode), n_trees(Tntree), i_node(0), n_nodes_i_tree(0), i_tree(0) {
         for(int i; i<Tntree;i++) {tree_index[i]=0;}
     };
     node& new_node();
@@ -255,11 +335,13 @@ struct Forest {
 template<int Tntree, int Tnnode>
 node& Forest<Tntree,Tnnode>::new_node() {
     if(i_node==n_nodes) error("no more nodes");
+    n_nodes_i_tree++;
     return(nodes[i_node++]);
 }
 template<int Tntree, int Tnnode>
 node& Forest<Tntree,Tnnode>::new_tree() {
     if(i_tree==Tntree) error("no more trees");
+    n_nodes_i_tree=1;
     tree_index[i_tree++] = i_node;
     return(new_node());
 }
@@ -344,12 +426,12 @@ public:
 
     //permanent allocatede data for the shrub learner
     Forest<Tntree,Tnnode> forest;
-    int y_size, X_ncol, p_ntree, p_mtry, p_maxdepth, p_maxnodes, nodes_in_tree;
+    int y_size, X_ncol, p_ntree, p_mtry, p_maxdepth, p_maxnodes, p_minnode;
     bool data_ready;
     
     shrub() 
     : sdata(nullptr), X(nullptr), y(nullptr), index(nullptr), ybag(nullptr),
-    y_size(0), p_ntree(Tntree), p_mtry(0), p_maxdepth(5), p_maxnodes(50), nodes_in_tree(0), data_ready(false) {
+    y_size(0), p_ntree(Tntree), p_mtry(0), p_maxdepth(10), p_maxnodes(50), p_minnode(5), data_ready(false) {
     };
     
     
@@ -358,9 +440,10 @@ public:
         const node& this_node, const node_stack& this_stack_node,
         node_stack& stack_l_node, node_stack& stack_r_node);
     void bestsplit(node& this_node, node_stack& this_stack_node);
-    void eval_node(node& this_node, node_stack& this_stack_node);
+    void eval_node(node& this_node, node_stack& this_stack_node, int depth);
     void grow_forest();
     void link_to_data(shrub_data<T,Tnrow,Tncol>*);
+    T predict(T* newX);
 };
 
 template <class T, int Tntree, int Tnnode, int Tnrow, int Tncol>
@@ -501,31 +584,34 @@ void shrub<T,Tntree,Tnnode,Tnrow,Tncol>::make_innode2(
 }
 
 template <class T, int Tntree, int Tnnode, int Tnrow, int Tncol>
-void shrub<T,Tntree,Tnnode,Tnrow,Tncol>::eval_node(node& this_node, node_stack& this_stack_node) {
+void shrub<T,Tntree,Tnnode,Tnrow,Tncol>::eval_node(node& this_node, node_stack& this_stack_node, int depth) {
     
+    //cout << forest.n_nodes_i_tree << " ";
+    //if(forest.n_nodes_i_tree>=p_maxnodes) cout << "\n >p_maxnodes" << forest.n_nodes_i_tree << " forest_i_node" << forest.i_node;
+
+    //reasons to stop terminalize this node/every open node
     if(
-        this_stack_node.parent_n<5 ||
-        ++nodes_in_tree>p_maxnodes ||
-        !forest.two_more_nodes()) {
-       // cout << "\n terminal node! " << this_stack_node.parent_n;
+        
+        forest.n_nodes_i_tree>=p_maxnodes ||  // at/over limit of allowed nodes in each tree (terminate all nodes)
+        this_stack_node.parent_n<p_minnode ||         // less than 5 obs in node (terminate this node)
+        depth >= p_maxdepth ||                // depth of node limits the allowed (terminate this node)
+        !forest.two_more_nodes()              // allocated memory in forest pool exhausted (terminate all nodes)
+    ) {
+        uint16_t flag=0;
+        if(forest.n_nodes_i_tree>=p_maxnodes) flag=1;
+        if(this_stack_node.parent_n<p_minnode) flag=2;       // less than 5 obs in node (terminate this node)
+        if(depth >= p_maxdepth) flag=3;
+        this_node.bestvar = this_stack_node.parent_n;
+
+
+
         this_node.makeTerminal(this_stack_node);
         return;   
     }
 
-    ///if not returned yet here, this node will be splitted
-
+    ///if not returned yet here, this node will be splitted further
     //find for this node...
     shrub::bestsplit(this_node,this_stack_node);
-
-
-    //constexpr int n_repeats=1;
-    //Timer.reset_sumTime();
-    //for(int i=0; i<n_repeats;i++) {
-      //  Timer.start();
-      //  shrub::bestsplit(this_node);
-      //  Timer.stop();
-    //}
-    //cout << "\n best split avg time(us);" << Timer.sumTime/n_repeats;
 
     //reserve permanent nodes from Forest pool
     node& l_node = forest.new_node();
@@ -535,9 +621,9 @@ void shrub<T,Tntree,Tnnode,Tnrow,Tncol>::eval_node(node& this_node, node_stack& 
     //initialize transient nodes on stack
     node_stack stack_l_node;
     node_stack stack_r_node;
-    bool l_innode[y_size];  //innodes index placed on stack, an hence deleted when finally leaving node
+    bool l_innode[y_size];  //innodes index placed on stack, an hence deleted when finally leaving this node/scope
     bool r_innode[y_size];
-    stack_l_node.innode = l_innode; // node.innode pointers point to stack innode
+    stack_l_node.innode = l_innode; // stack_l_node.innode pointers point to stack innode
     stack_r_node.innode = r_innode;
     
     //configure child nodes
@@ -546,17 +632,9 @@ void shrub<T,Tntree,Tnnode,Tnrow,Tncol>::eval_node(node& this_node, node_stack& 
         stack_l_node,stack_r_node
     );
 
-    //Timer.reset_sumTime();
-    //for(int i=0; i<n_repeats;i++) {
-    //    Timer.start();
-    //    shrub::make_innode2(this_node,l_node,r_node);
-    //    Timer.stop();
-    //}
-    
     //go evaluate child nodes
-    //cout << "\nl" << stack_l_node.parent_n << 'r' << stack_r_node.parent_n;
-    eval_node(l_node, stack_l_node);
-    eval_node(r_node, stack_r_node);
+    eval_node(l_node, stack_l_node, depth+1);
+    eval_node(r_node, stack_r_node, depth+1);
 
     //returned from every descending child node, return from this node also.
     return;
@@ -566,13 +644,15 @@ template <class T, int Tntree, int Tnnode, int Tnrow, int Tncol>
 void shrub<T,Tntree,Tnnode,Tnrow,Tncol>::grow_forest() {
 
     forest.truncate(); // reset/overwrite Forest pool
+    const T* y = &sdata->y.a[0][0];
+    uint16_t* ybag = &sdata->ybag.a[0][0];
 
     //grow trees until no more trees or nodes in Forest pool
     while(forest.more_trees() && forest.two_more_nodes()) {
     
     //reserve permenant node from Forest pool in shrubs object
     node& nd = forest.new_tree();
-    nodes_in_tree = 0;
+    
 
     //initialize transient node on stack (stack_nodes are deleted with the stack)
     node_stack stack_nd;   //object with all transient information
@@ -582,8 +662,7 @@ void shrub<T,Tntree,Tnnode,Tnrow,Tncol>::grow_forest() {
     //bootstrapping and configuration of first stack_nodes
     bool tempbool;
 
-    const T* y = &sdata->y.a[0][0];
-    uint16_t* ybag = &sdata->ybag.a[0][0];
+
     
     for(int i=0; i<y_size; i++) {
         uint32_t randVal = uint_dist(rng);
@@ -596,56 +675,151 @@ void shrub<T,Tntree,Tnnode,Tnrow,Tncol>::grow_forest() {
     }
     
     //construct tree from first node
-    eval_node(nd,stack_nd);
+    eval_node(nd,stack_nd,1);
 
     }
 };
 
+/* template <class T, int Tntree, int Tnnode, int Tnrow, int Tncol>
+T shrub<T,Tntree,Tnnode,Tnrow,Tncol>::predict(T* newX) {
+    Xtest = newX;
+    yresult = 0;
+    node* pn = nullptr;
+    
+    pn->   
+    for(int i=0;i<forest.i_tree;i++) {
+        pn = &forest.nodes[forest.tree_index[i]];
+        while(pn->right_child_id!=0) {
+            if(Xtest[pn->bestvar]<=pn->splitval) {
+                pn = pn+1; // go to left node
+            } else {
+                pn = &forest.nodes[pn->right_child_id]; //go to right node
+            }
+        }
+        yresult += pn->splitval;
+    }
+    yresult /= forest.i_trees:
+    return(yresult);
+};
+ */
+
+
 
 constexpr int ntree=50;
-constexpr int nnode= 50000;
-constexpr int nrow =1024;
-constexpr int ncol =11;
-constexpr int ycol = 5;
+constexpr int nnode=50*300;
+constexpr int nrow =10000;
+constexpr int ncol =6;
+constexpr int ycol =5;
+
 int main() {
-    //cout <<"l482\n";    
-    shrub<double,ntree,nnode,nrow,ncol> sf; //initialize a forest with 10 trees and 500 nodes(max)
+
+    Timer.setFreq();
+
+    int nval = nrow*ncol;
+    double Xbuffer[nval];
+    for(int i=0;i<nval;i++) Xbuffer[i]=i;
+    dynamic_array<double,int> X(Xbuffer,nval,ncol);
+    X.print();
     
+    //safe access
+    for(int i=0; i<5; i++) {cout << " " << X.at(i,0);}
+
+    Timer.reset_sumTime();
+    Timer.start();
+    double temp;
+    for(int i=0; i<nrow; i++) { temp =+ X.at(i,4);}
+    Timer.stop();
+    cout << "\n safe time: " << Timer.sumTime;
+
+    //get raw pointer at own risk
+    cout << "\n x4 ";
+    double* x4 = X.get_col_p(4);
+    for(int i=0; i<5; i++) {cout << " " << x4[i];}
+
+    Timer.reset_sumTime();
+    Timer.start();
+    double temp2;
+    for(int i=0; i<nrow; i++) { temp2 =+ x4[i];}
+    Timer.stop();
+    cout << "\n x4 time: " << Timer.sumTime;
+
+    
+    //get raw pointer at own risk
+    cout << "\n v4 ";
+    dynamic_vector<double,int> v4 = X.get_vector(4);
+    for(int i=0; i<5; i++) {cout << " " << v4.at(i);}
+
+
+    Timer.reset_sumTime();
+    Timer.start();
+    double temp3;
+    for(int i=0; i<nrow; i++) { temp3 =+ v4.at(i);}
+    Timer.stop();
+    cout << "\n safe v4.at(i) time: " << Timer.sumTime;
+
+    Timer.reset_sumTime();
+    Timer.start();
+    double temp4;
+    for(int i=0; i<nrow; i++) { temp4 =+ v4.next();}
+    Timer.stop();
+    cout << "\n v4 next time: " << Timer.sumTime;
+
+
+    /* int a;
+    int b;
+
+    cin >>a >>b;
+
+    int arr[a][b];
+
+    arr[a-1][b-1]=0;
+
+    cout <<"l604\n";    
+    shrub<double,ntree,nnode,nrow,ncol> sf; //initialize a forest with 10 trees and 500 nodes(max)
+    cout <<"l606\n";    
+
     Timer.setFreq();
     matrix<double,nrow,ncol> X;
     matrix<double,nrow,1   > y;
-    X.fillCSV("mtcars1000.csv");
+    X.fillCSV("./data/train1.csv");
+    //X.print();
+    
     for(int i = 0 ; i<X.nrow; i++) {y.a[0][i] = X.a[ycol][i];}
     X.erase_col(ycol,ycol+1);
     
-    
-    //
     shrub_data<double,nrow,ncol> sd(X,y);
     sd.index_features();
     sf.link_to_data(&sd);
     
+    sf.p_maxnodes = 250;
+    sf.p_maxdepth = 12;
+    sf.p_minnode = 5;
+    cout << "hello";
     Timer.start();
-    sf.p_maxnodes = 400;
     sf.grow_forest();
     Timer.stop();
 
+
+    
+
     cout << "still alive time avg=" << Timer.sumTime << "\n";
 
- for(int i=0; i<sf.forest.n_trees;i++) cout << sf.forest.tree_index[i] << ", ";
+    for(int i=0; i<sf.forest.n_trees;i++) cout << sf.forest.tree_index[i] << ", ";
     
-    
+    std::cout << std::fixed;
+    std::cout << std::setprecision(2);
     //for(int i=0; i<1000;i++) {sf.forest.nodes[i].print_body();}
      
     //for(int i=0; i<150;i++) cout << sf.forest.tree_index[i] << ", ";
     sf.forest.nodes[0].print_header();
     int j_tree=0;
     //for(int i=0; i<sf.forest.i_node;i++) {
-    for(int i=0; i<150;i++) {
+    for(int i=0; i<250;i++) {
         if(i==sf.forest.tree_index[j_tree]) {
             j_tree++;
             cout << "\n";
         }
         sf.forest.nodes[i].print_body();
         cout << "\t\t" << j_tree;
-    } 
+    }   */
 }
