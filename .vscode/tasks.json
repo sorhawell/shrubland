@@ -7,11 +7,13 @@
             "command": "g++",
             "args": [
                 "-std=c++11",
-                "-Wno-deprecated",
+               // "-Wno-deprecated",
                 "-g",
+                "dynarray.cpp",
+                "shrub_learner.cpp",
+                "main.cpp",
                 "-o",
-                "main",
-                "main.cpp"
+                "main"
             ],
             "group": {
                 "kind": "build",
