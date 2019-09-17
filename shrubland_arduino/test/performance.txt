@@ -107,7 +107,7 @@ total error is: 1.24
  
 
 
-##test 2019.09.17 - yeah found bug impeeding accuracy
+##test 2019.09.17 - yeah found bug impeeding accuracy and skipping some splits
 
   forlake.i_node8482
 end of loop

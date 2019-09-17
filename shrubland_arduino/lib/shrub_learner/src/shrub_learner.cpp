@@ -139,7 +139,7 @@ void forest_lake::bestsplit(temp_node* snode) {
     //internal variables
     float sum_l{0}, sum_r{0};   //rolling sum/substraction of target values
     uint16_t n_l{0}, n_r{0}, tieVal{0}; //count size of left and tight partitions
-    float crit{-1}, critmax{-1};
+    float crit{-1}, critmax{-1}, curr_y{0};
     uint16_t prev{0}, curr{0}, i_idx{0}; //dummy init
     const uint16_t n_obs = X->get_row();
 //    uint32_t randVal{0};
@@ -167,7 +167,9 @@ void forest_lake::bestsplit(temp_node* snode) {
         prev=curr;
 
         //check all splits
-        for(i_idx=i_idx+1; i_idx<n_obs;i_idx++) {
+        for(i_idx=i_idx+1; i_idx<n_obs && n_l!=0;i_idx++) {
+            
+        
             //use index to iterate any split point sorted from low variable value to high
             curr = i_var_indexed[i_idx];
 
@@ -176,7 +178,7 @@ void forest_lake::bestsplit(temp_node* snode) {
                 continue;         //look for next
             }
 
-            if(x[curr]!=x[prev]) {  //only calc crit if feature values are different
+            //if(x[curr]!=x[prev]) {  //only calc crit if feature values are different
                 
                 //Serial.print(n_l);Serial.print(" ");
                 
@@ -189,7 +191,7 @@ void forest_lake::bestsplit(temp_node* snode) {
                 } */
 
                 //update crit handling, //swap crit== and crit> (the latter is more common)
-                if (crit >= critmax) {  //handle better crit, accept new split
+                if (crit >= critmax && x[curr]!=x[prev]) {  //handle better crit, accept new split
                     if (crit == critmax) { //handle as tie
                         tieVal++;
                     } else { //handle as tie
@@ -199,6 +201,7 @@ void forest_lake::bestsplit(temp_node* snode) {
                     if (crit != critmax || uint_dist(rng) < UINT32_MAX / tieVal) { //update
                             snode->nodep->splitval = (x[curr] + x[prev]) / 2.0;
                             //Serial.print(crit);Serial.print(" ");Serial.print(n_l);Serial.print(" ");
+                            //Serial.print(i_var);Serial.print(" ");
                             //Serial.println(snode->nodep->splitval );
                             snode->nodep->bestvar = i_var;
                             snode->lchild_n = n_l;
@@ -207,12 +210,14 @@ void forest_lake::bestsplit(temp_node* snode) {
                             snode->rchild_sum = sum_r;
                     }
                 }
-            }
+            //}
             //update indexes etc.
-            sum_l -= y->get(curr);
-            sum_r += y->get(curr);
-            n_r++; n_l--;
             prev = curr;
+            curr_y = y->get(curr);
+            sum_r += curr_y;
+            sum_l -= curr_y;
+            n_r++; n_l--;
+            
         }
     }
 
@@ -329,11 +334,16 @@ void forest_lake::grow(dynamic_array<float,uint16_t>* newX, dynamic_vector<float
                     idx = index->get_col_p(tnode[i_depth].nodep->bestvar);
                     splitval = tnode[i_depth].nodep->splitval;
                     x____test_n=0;
+                    //int x_test_innode=0;
                     for(uint16_t i=0; i<X->get_row(); i++) {
-                        in_child[i] = in_parent[i] && x[i] >= splitval;
+                        
+                        in_child[i] = in_parent[i] && (x[i] >= splitval);
                         if(in_child[i]) x____test_n++;
+                        //if(in_parent[i]) x_test_innode++;
                     }
                     if(x____test_n != tnode[i_depth].lchild_n) {
+                      //  Serial.println(x_test_innode);
+                        Serial.println(tnode[i_depth].nodep->bestvar);
                         Serial.print(" lsought:");Serial.print(tnode[i_depth].lchild_n);
                         Serial.print(" rsought:");Serial.print(tnode[i_depth].rchild_n);
                         Serial.print(" lfound: ");Serial.println(x____test_n);
