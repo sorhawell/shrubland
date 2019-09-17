@@ -40,9 +40,12 @@ void setup() {
 
 }
 
-    
+
+int sum_time{0};
+float sum_error{0};
+int n_trials{0};
 void loop(){
-    
+    n_trials++;
  
     //X2 = X; // not public accessible use instead .assign method instead
     int startTime;
@@ -72,12 +75,16 @@ void loop(){
     double SD = sqrt(sqerr /(n_train-1));
     double SD2= sqrt(sqerr2/(n_train-1));
     Serial.print("model error is: "); Serial.print(SD );
+    sum_error += SD;
+    Serial.print(" avg.:"); Serial.print(sum_error/n_trials,4);
     Serial.print("  total error is: "); Serial.print(SD2);
     endTime = millis();
 
     //forlake.print_nlines(15);    
 
     Serial.print("  time is:"); Serial.print(endTime-startTime);
+    sum_time += endTime-startTime;
+    Serial.print(" avg.:"); Serial.print(sum_time/n_trials);
     Serial.print(" forlake.i_node"); Serial.print(forlake.i_node);
     
     //Serial.println(forlake.i_node);

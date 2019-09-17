@@ -137,9 +137,12 @@ void forest_lake::truncate() {
 void forest_lake::bestsplit(temp_node* snode) {
 
     //internal variables
-    float sum_l{0}, sum_r{0};   //rolling sum/substraction of target values
-    uint16_t n_l{0}, n_r{0}, tieVal{0}; //count size of left and tight partitions
+    uint16_t  tieVal{0};
     float crit{-1}, critmax{-1}, curr_y{0};
+    
+    float sum_l{0}, sum_r{0};   //rolling sum/substraction of target values
+    uint16_t n_l{0}, n_r{0}; //count size of left and tight partitions
+    
     uint16_t prev{0}, curr{0}, i_idx{0}; //dummy init
     const uint16_t n_obs = X->get_row();
 //    uint32_t randVal{0};
@@ -149,7 +152,7 @@ void forest_lake::bestsplit(temp_node* snode) {
     for(uint16_t i_var=0; i_var < X->get_col();i_var++) { //iterate each variable
         
         const auto* x = X->get_col_p(i_var); //reference to column for this variable in matrix
-        auto* i_var_indexed = index->get_col_p(i_var);
+        const auto* i_var_indexed = index->get_col_p(i_var);
         
         //find fist obs which is innodes
         i_idx = 0;
