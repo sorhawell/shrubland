@@ -42,3 +42,61 @@ model error is: 1.04
 total error is: 1.24
 
  time is:903
+
+
+
+
+##test 2019.09.17 - add const to loop bound, not much effect
+
+
+ forlake.i_node6070
+end of loop
+
+ dynarray deleted
+with ownership to heap
+
+ dynarray deleted
+with ownership to heap
+model error is: 1.05
+total error is: 1.24
+
+ time is:911
+
+ forlake.i_node6062
+end of loop
+
+ dynarray deleted
+with ownership to heap
+
+ dynarray deleted
+with ownership to heap
+model error is: 1.04
+total error is: 1.24
+
+ time is:903
+
+ forlake.i_node5994
+end of loop
+
+ dynarray deleted
+with ownership to heap
+
+ dynarray deleted
+with ownership to heap
+model error is: 1.02
+total error is: 1.24
+
+ time is:913
+
+ forlake.i_node6102
+end of loop
+
+ dynarray deleted
+with ownership to heap
+
+ dynarray deleted
+with ownership to heap
+model error is: 1.03
+total error is: 1.24
+
+ time is:911

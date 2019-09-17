@@ -141,7 +141,7 @@ void forest_lake::bestsplit(temp_node* snode) {
     uint16_t n_l{0}, n_r{0}, tieVal{0}; //count size of left and tight partitions
     float crit{-1}, critmax{-1};
     uint16_t prev{0}, curr{0}, i_idx{0}; //dummy init
-    uint16_t n_obs = X->get_row();
+    const uint16_t n_obs = X->get_row();
 //    uint32_t randVal{0};
 //    bool none_found_yet{true};
     bool* innodep = snode->innodep;
