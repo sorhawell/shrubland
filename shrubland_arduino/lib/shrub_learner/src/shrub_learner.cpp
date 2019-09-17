@@ -152,6 +152,7 @@ void forest_lake::bestsplit(temp_node* snode) {
         auto* i_var_indexed = index->get_col_p(i_var);
         
         //find fist obs which is innodes
+        i_idx = 0;
         while(i_idx<n_obs) {
             curr = i_var_indexed[i_idx];
             if(innodep[curr]) break;
