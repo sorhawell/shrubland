@@ -137,63 +137,36 @@ void forest_lake::truncate() {
 void forest_lake::bestsplit(temp_node* snode) {
 
     //internal variables
-    uint16_t  tieVal{0};
-    float crit{-1}, critmax{-1}, curr_y{0};
     
-    float sum_l{0}, sum_r{0};   //rolling sum/substraction of target values
-    uint16_t n_l{0}, n_r{0}; //count size of left and tight partitions
-    
-    uint16_t prev{0}, curr{0}, i_idx{0}; //dummy init
+    float crit{-1}, critmax{-1}, curr_y{0}, sum_r{0}, sum_l{0};
+    uint16_t tieVal{0}, prev{0}, curr{0}, i_idx{0}, n_r{0}, n_l{0}; //dummy init
     const uint16_t n_obs = X->get_row();
-//    uint32_t randVal{0};
-//    bool none_found_yet{true};
     bool* innodep = snode->innodep;
-   
+    
     for(uint16_t i_var=0; i_var < X->get_col();i_var++) { //iterate each variable
         
         const auto* x = X->get_col_p(i_var); //reference to column for this variable in matrix
         const auto* i_var_indexed = index->get_col_p(i_var);
-        
-        //find fist obs which is innodes
         i_idx = 0;
-        while(i_idx<n_obs) {
-            curr = i_var_indexed[i_idx];
-            if(innodep[curr]) break;
-            i_idx++;
-        }
-
-        //place obs in right, rest in left
-        sum_l = snode->sum - y->get(curr);
-        sum_r = y->get(curr);
-        n_l = snode->n - 1 ;
-        n_r = 1;
-        prev=curr;
-
-        //check all splits
-        for(i_idx=i_idx+1; i_idx<n_obs && n_l!=0;i_idx++) {
-            
         
-            //use index to iterate any split point sorted from low variable value to high
+        //find first obs which is innodes, save information to curr and i_idx;
+        while(!innodep[(curr = i_var_indexed[i_idx++])]);
+        
+        //set initial state split search
+        prev=curr;
+        sum_r = y->get(curr);
+        sum_l = snode->sum - y->get(curr);
+        n_r = 1;
+        n_l = snode->n - 1 ;
+        
+        //check all splits
+        for(; i_idx<n_obs && n_l>2; i_idx++) {
+            
             curr = i_var_indexed[i_idx];
-
-            //skip if not innode or if same value as last
-            if(!innodep[curr]) {  //check if indexed obs is innode
-                continue;         //look for next
-            }
-
-            //if(x[curr]!=x[prev]) {  //only calc crit if feature values are different
-                
-                //Serial.print(n_l);Serial.print(" ");
-                
-                //compute crit
-                crit = (sum_l * sum_l / n_l) + (sum_r * sum_r / n_r);// - crit_parent; 
-                
-                //penalty for including less than 3 obs in innode
-            /*  if(n_l<=3 || n_r<=3) {//check if same value
-                    crit /= 12.7;
-                } */
-
-                //update crit handling, //swap crit== and crit> (the latter is more common)
+            if(!innodep[curr]) continue;  //check if indexed obs is innode
+            
+            if(n_r>2 || crit==-1) {
+                crit = (sum_l * sum_l / n_l) + (sum_r * sum_r / n_r);// - crit_parent;
                 if (crit >= critmax && x[curr]!=x[prev]) {  //handle better crit, accept new split
                     if (crit == critmax) { //handle as tie
                         tieVal++;
@@ -213,7 +186,7 @@ void forest_lake::bestsplit(temp_node* snode) {
                             snode->rchild_sum = sum_r;
                     }
                 }
-            //}
+            }
             //update indexes etc.
             prev = curr;
             curr_y = y->get(curr);
