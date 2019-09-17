@@ -141,6 +141,7 @@ void forest_lake::bestsplit(temp_node* snode) {
     uint16_t n_l{0}, n_r{0}, tieVal{0}; //count size of left and tight partitions
     float crit{-1}, critmax{-1};
     uint16_t prev{0}, curr{0}, i_idx{0}; //dummy init
+    uint16_t n_obs = X->get_row();
 //    uint32_t randVal{0};
 //    bool none_found_yet{true};
     bool* innodep = snode->innodep;
@@ -151,7 +152,7 @@ void forest_lake::bestsplit(temp_node* snode) {
         auto* i_var_indexed = index->get_col_p(i_var);
         
         //find fist obs which is innodes
-        while(i_idx<index->get_row()) {
+        while(i_idx<n_obs) {
             curr = i_var_indexed[i_idx];
             if(innodep[curr]) break;
             i_idx++;
@@ -165,7 +166,7 @@ void forest_lake::bestsplit(temp_node* snode) {
         prev=curr;
 
         //check all splits
-        for(i_idx=i_idx+1; i_idx<index->get_row();i_idx++) {
+        for(i_idx=i_idx+1; i_idx<n_obs;i_idx++) {
             //use index to iterate any split point sorted from low variable value to high
             curr = i_var_indexed[i_idx];
 

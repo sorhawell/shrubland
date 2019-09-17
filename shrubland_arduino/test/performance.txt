@@ -1,0 +1,44 @@
+##test 2019.09.17
+model error is: 1.03
+total error is: 1.24
+time is:965
+forlake.i_node6070
+end of loop
+dynarray deleted
+with ownership to heap
+
+ dynarray deleted
+with ownership to heap
+model error is: 1.05
+total error is: 1.24
+
+ time is:964
+
+##test 2019.09.17 - compute loop bounds only once
+ time is:913
+
+ forlake.i_node6070
+end of loop
+
+ dynarray deleted
+with ownership to heap
+
+ dynarray deleted
+with ownership to heap
+model error is: 1.05
+total error is: 1.24
+
+ time is:911
+
+ forlake.i_node6062
+end of loop
+
+ dynarray deleted
+with ownership to heap
+
+ dynarray deleted
+with ownership to heap
+model error is: 1.04
+total error is: 1.24
+
+ time is:903
