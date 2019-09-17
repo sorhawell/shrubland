@@ -71,17 +71,17 @@ void loop(){
     
     double SD = sqrt(sqerr /(n_train-1));
     double SD2= sqrt(sqerr2/(n_train-1));
-    Serial.print("model error is: "); Serial.println(SD );
-    Serial.print("total error is: "); Serial.println(SD2);
+    Serial.print("model error is: "); Serial.print(SD );
+    Serial.print("  total error is: "); Serial.print(SD2);
     endTime = millis();
 
     //forlake.print_nlines(15);    
 
-    Serial.print(" \n time is:"); Serial.println(endTime-startTime);
-    Serial.print(" \n forlake.i_node"); Serial.println(forlake.i_node);
+    Serial.print("  time is:"); Serial.print(endTime-startTime);
+    Serial.print(" forlake.i_node"); Serial.print(forlake.i_node);
     
     //Serial.println(forlake.i_node);
 
-    Serial.println("end of loop");
+    Serial.println("...");
 }
 
