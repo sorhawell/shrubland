@@ -80,9 +80,9 @@ dynamic_array<T,S>::dynamic_array(S size, S ncol):
 
 template <class T, class S>
 dynamic_array<T,S>::~dynamic_array() {
-    Serial.println("\n dynarray deleted");
+    //Serial.println("\n dynarray deleted");
     if(ownership) {
-        Serial.println("with ownership to heap");
+        //Serial.println("with ownership to heap");
         delete[] dyn_array;
     }
     
