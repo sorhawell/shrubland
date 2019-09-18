@@ -247,6 +247,18 @@ S dynamic_array<T,S>::get_row() {
     return(n_row);
 }
 
+template<class T>
+T Abs(T x) {
+    if(x >= 0) {
+        return  x;
+    } else {
+        return -x;
+    }
+};
+
+template float Abs(float);
+template double Abs(double);
+
 
 /* 
 template <class T,class S>

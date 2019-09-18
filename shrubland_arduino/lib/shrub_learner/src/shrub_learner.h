@@ -62,6 +62,7 @@ class forest_lake {
     bool two_more_nodes();
     void truncate();
     void print_nlines(uint16_t);
+    void print_splits(uint16_t);
     
     void grow(dynamic_array<float,uint16_t>* X, dynamic_vector<float,uint16_t>* y);
     float predict(dynamic_array<float,uint16_t>* X,uint16_t i_row);

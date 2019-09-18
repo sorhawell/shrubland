@@ -75,6 +75,11 @@ class dynamic_array{
     //void fillCSV(std::string);
     //void fillCSV_float(string path); //could be reworked to template specialization
 };//dynarray
+
+
+template<class T>
+T Abs(T);
+
 /* 
 #ifndef _FOO_H 
 #define _FOO_H

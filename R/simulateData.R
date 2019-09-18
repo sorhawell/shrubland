@@ -1,23 +1,25 @@
 rm(list=ls())
+setwd("~/cpp/shrubland/R")
 library(randomForest)
 set.seed(1)
 makeXY = function(N=500) {
   out = list()
   out$X = data.frame(replicate(5,rnorm(N)))
-  out$y = with(out$X,X1 + sin(X2))
+  out$y = with(out$X,X1)
   return(out)
 }
 train = makeXY();
 test  = makeXY();
 
 Time = system.time({
-  rf = randomForest(train$X,train$y,ntree=50,maxnodes = 50,mtry =5)
+  rf = randomForest(train$X[,1:3],train$y,ntree=1,sampsize=250,nodesize = 7,mtry =3,replace = FALSE)
 })
-
+plot(rf$predicted,train$X$X1)
 #diagnosttics
 rf
 Time
 preds = predict(rf,test$X)
+plot(test$y,preds)
 cor(preds,test$y)^2
 rf
 

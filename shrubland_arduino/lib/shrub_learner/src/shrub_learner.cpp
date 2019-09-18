@@ -26,9 +26,8 @@ void node::print() {
 void node::print_header()  {Serial.println("\n node \t splitval \tright_child_id \tbestvar\t pred \t size \t tree");}
 void node::print_body()    {
     Serial.print(splitval);Serial.print("\t\t");
-    Serial.print(splitval);Serial.print("\t\t");
     Serial.print(right_child_id);Serial.print("\t\t");
-    Serial.print(bestvar);Serial.print("\t\t");
+    Serial.print(bestvar);Serial.print("\t\t\t");
 }
 void node::print_terminal(){
     Serial.print("\t\t\t\t\t");Serial.print(splitval);
@@ -40,11 +39,12 @@ void forest_lake::print_nlines(uint16_t nlines) {
     
     uint16_t j_tree=0;
     //for(uint16_t i=0; i<sf.forest.i_node;i++) {
+        Serial.println();
+        nodes[0].print_header();
     for(uint16_t i=0; i<nlines && i<n_nodes;i++) {
-        if(nodes[i].right_child_id==0 && nodes[i].bestvar==0 ) {
+
+        if(nodes[i].right_child_id==0 && nodes[i].bestvar==0 ) {    
             j_tree++;
-            Serial.println();
-            nodes[0].print_header();
         }
         Serial.println(); Serial.print(i); Serial.print(" \t");
         if(nodes[i].right_child_id!=0) nodes[i].print_body();
@@ -53,10 +53,25 @@ void forest_lake::print_nlines(uint16_t nlines) {
     } 
 }
 
-void node::makeTerminal(float new_splitval, uint16_t terminal_n) {
+void forest_lake::print_splits(uint16_t nlines) {
+    uint16_t j_tree=0;
+    uint16_t depth=0;
+    uint16_t max_depth=15;
+    Serial.print(j_tree);
+    for(uint16_t i=0; i<nlines && i<n_nodes;i++) {
+        if(nodes[i].right_child_id==0 && nodes[i].bestvar==0 ) {    
+            if(nodes[i+1].right_child_id==0 && nodes[i+1].bestvar==0) break;
+            depth = 0;
+            Serial.print("\n t");Serial.print(++j_tree);Serial.print(" ");
+        }
+        if(++depth<=max_depth) {Serial.print(nodes[i].splitval);Serial.print(',');}
+    } 
+};
+
+void node::makeTerminal(float pred_value, uint16_t terminal_n) {
     right_child_id = 0;
     bestvar = terminal_n;
-    splitval = new_splitval;
+    splitval = pred_value;
 }
 
 temp_node::temp_node() :
@@ -214,9 +229,10 @@ void forest_lake::grow(dynamic_array<float,uint16_t>* newX, dynamic_vector<float
                     
 
     //run time pars
-    const uint16_t p_depth = 8;
+    const uint16_t p_depth = 7;
+    const uint16_t p_minnode = 5;
     const uint16_t p_ntree = 50;
-    const uint16_t p_sampsize = 330;
+    const uint16_t p_sampsize = 150;
     
     
     //initialize allocate temporay data
@@ -249,9 +265,11 @@ void forest_lake::grow(dynamic_array<float,uint16_t>* newX, dynamic_vector<float
     for(uint16_t i = 0; i<p_depth;i++) tnode[i].innodep = innode.get_col_p(i);
     int16_t i_depth=0;     
     int16_t x____test_n=0;
+    float   x____test_sum=0;
 
-    while(two_more_nodes() && p_ntree>i_tree-1) {
+    while(two_more_nodes() && i_tree<p_ntree) {
         std::shuffle(innode_v0.begin(),innode_v0.end(),rng);
+        //for(bool* i =innode_v0.begin(); i<innode_v0.begin()+10; i++) Serial.print(*i); Serial.println(", ");      
 
 /*         for(int i=0; i<5;i++) {
             Serial.print(innode_v0.at(i));
@@ -276,22 +294,55 @@ void forest_lake::grow(dynamic_array<float,uint16_t>* newX, dynamic_vector<float
         //grow tree
         while(i_depth>0 || tnode[0].status<2) {
             
+
+            if(i_depth<0 || i_depth>p_depth) {
+                error("seems we're in too deep or shallow");
+            }
+
             tnode[i_depth].status++; //count visits to node
+
+            /* if(!two_more_nodes()) {
+                Serial.println("nodes info");
+                Serial.println(tnode[i_depth].status);
+                Serial.println(tnode[i_depth].n);
+                Serial.println(i_depth);
+            } */
             
             //conditions to break loop
             //out of nodes/trees, too deep, too few nodes
             if(tnode[i_depth].status == 1) {
                 
                 //a new node
-                if(i_depth>=p_depth-1 || tnode[i_depth].n<5 || !two_more_nodes() ) {
+                if(i_depth>=p_depth-1 || tnode[i_depth].n<p_minnode || !two_more_nodes() ) {
+                    /* if(!two_more_nodes()) {
+                        Serial.println("nodes depleted");
+                        Serial.println(tnode[i_depth].status);
+                        Serial.println(tnode[i_depth].n);
+                        Serial.println(i_depth);
+                    } */
 
                     tnode[i_depth].nodep->makeTerminal(tnode[i_depth].mean_node(),tnode[i_depth].n);
-                    i_depth--;
-                    continue;
+                    
+                    /* if(i_depth!=0) {
+                        Serial.print(i_depth);Serial.print(",");
+                        Serial.print(tnode[i_depth].nodep->bestvar);Serial.print(",");
+                        Serial.print(tnode[i_depth-1].nodep->splitval);Serial.print(",");
+                        Serial.println(tnode[i_depth].nodep->splitval);
+                    } */
+                    
+
+                    if(i_depth==0) { //if main node is a terminal 
+                        break; //stop growing this tree
+                    } else {
+                        i_depth--;  //some other node was terminal
+                        continue;   //go up one level
+                    }
                 } else {
                     //start splitting
 
                     bestsplit(&tnode[i_depth]); //find best split
+
+                    //Serial.print(i_depth),Serial.print(i_depth)
 
                     //allocate right child node, no temp_node for now
                     tnode[i_depth].nodep->right_child_id = i_node; //place right child id in this parent node
@@ -302,6 +353,7 @@ void forest_lake::grow(dynamic_array<float,uint16_t>* newX, dynamic_vector<float
                     tnode[i_depth+1].sum = tnode[i_depth].lchild_sum;
                     tnode[i_depth+1].n   = tnode[i_depth].lchild_n;
 
+                   
                                    
                     //update left child temp_node innode by bestsplit
                     in_parent = tnode[i_depth  ].innodep;
@@ -310,21 +362,32 @@ void forest_lake::grow(dynamic_array<float,uint16_t>* newX, dynamic_vector<float
                     idx = index->get_col_p(tnode[i_depth].nodep->bestvar);
                     splitval = tnode[i_depth].nodep->splitval;
                     x____test_n=0;
+                    x____test_sum=0;
                     //int x_test_innode=0;
                     for(uint16_t i=0; i<X->get_row(); i++) {
                         
                         in_child[i] = in_parent[i] && (x[i] >= splitval);
-                        if(in_child[i]) x____test_n++;
+                        if(in_child[i]) {
+                            x____test_n++;
+                            x____test_sum += y->at(i);
+                        }
                         //if(in_parent[i]) x_test_innode++;
                     }
-                    if(x____test_n != tnode[i_depth].lchild_n) {
+                    
+                    if(
+                        x____test_n != tnode[i_depth].lchild_n ||
+                        Abs(x____test_sum - tnode[i_depth].lchild_sum)>0.001
+                    ) {
                       //  Serial.println(x_test_innode);
+                        Serial.println(Abs(x____test_sum - tnode[i_depth].lchild_sum));
                         Serial.println(tnode[i_depth].nodep->bestvar);
                         Serial.print(" lsought:");Serial.print(tnode[i_depth].lchild_n);
                         Serial.print(" rsought:");Serial.print(tnode[i_depth].rchild_n);
                         Serial.print(" lfound: ");Serial.println(x____test_n);
                         error("wrong left n");
                     }
+
+                    
 
                      //go to left child
                     tnode[i_depth+1].status=0; //reset child status(n_visits) to zero
@@ -335,6 +398,7 @@ void forest_lake::grow(dynamic_array<float,uint16_t>* newX, dynamic_vector<float
             } else {
                 if(tnode[i_depth].status == 2) {
 
+                    //temp_node tmp_l = tnode[i_depth+1];
                     //recover right node pointer with ugly pointer arithmetics
                     tnode[i_depth+1].nodep = nodes + tnode[i_depth].nodep->right_child_id;
                     tnode[i_depth+1].sum = tnode[i_depth].rchild_sum;
@@ -360,6 +424,14 @@ void forest_lake::grow(dynamic_array<float,uint16_t>* newX, dynamic_vector<float
                         error("wrong right n");
                     }
 
+                    
+/*                     temp_node tmp_r = tnode[i_depth+1];
+
+                    Serial.print("children mean:");
+                    Serial.print((tmp_l.mean_node() * tmp_l.n + tmp_r.mean_node() * tmp_r.n) / (tmp_l.n+tmp_r.n) );
+                    Serial.print("parent mean:");
+                    Serial.println(tnode[i_depth].mean_node()); */
+                    
                     //go to right child
                     tnode[i_depth+1].status=0;
                     i_depth++;
@@ -371,7 +443,13 @@ void forest_lake::grow(dynamic_array<float,uint16_t>* newX, dynamic_vector<float
                         i_depth--;
                         continue;
                     }else {
+                        /* tnode[i_depth].nodep->print_header();
+                        tnode[i_depth].nodep->print_body();
+                        tnode[i_depth].nodep->print_terminal(); */
+                        Serial.println(i_depth);
+                        Serial.println( tnode[i_depth].status);
                         error("how did this happen!!?!?");
+                        
                     }
                 }
             }
@@ -392,36 +470,46 @@ float forest_lake::predict(dynamic_array<float,uint16_t>* X,uint16_t i_row){
     //copy 
     float xnew[X->get_col()];
     for(uint16_t i_col=0;i_col<X->get_col();i_col++) xnew[i_col] = X->get(i_row,i_col);
-
+    //Serial.print("x0=");Serial.print(xnew[0]);Serial.print("|");
     uint16_t j_tree=0;   //count tree predictions found
     float prediction=0;  //sum predictions
     uint16_t k_node = 0; //iterate nodes in one tree
 
     for(uint16_t j_node=0; j_node < n_nodes; j_node++) { //iterate all nodes in forest lake to find trees
         if(nodes[j_node].right_child_id==0 &&  nodes[j_node].bestvar==0) { //tree found
-            if(j_tree>=i_tree-1) break;
+            if(j_tree>=i_tree) break;
           
             k_node = j_node + 1; //iterate tree
+            //Serial.println("k_node init:");Serial.println(k_node);
             while(true) {
-
+                /* nodes[k_node].print_body();
+                Serial.println(" |"); */
                 if(nodes[k_node].right_child_id!=0) {
                     
                     //this node is intermediary
                     if(xnew[nodes[k_node].bestvar] >= nodes[k_node].splitval) {
-                        k_node++;
+                      k_node = nodes[k_node].right_child_id + 1 ;
                     } else {
-                        k_node = nodes[k_node].right_child_id;
+                      k_node = nodes[k_node].right_child_id;
                     }
-
+                    
+                    
+                //Serial.print("[");Serial.print(k_node);Serial.print("]");
                 } else {
+                    
                     //this node is terminal
                     j_tree++;
                     prediction += nodes[k_node].splitval;
+                   
+
+                    //Serial.print(", (");Serial.print(nodes[k_node].bestvar);Serial.print(")");
+                    //Serial.print(nodes[k_node].splitval);
                     j_node = k_node; //new tree cant possibly start before k_node
                     break;
                 }
             }
         }
     }
+    //Serial.print(" = ");Serial.println(prediction/j_tree);
     return(prediction/j_tree);
 }

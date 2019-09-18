@@ -13,7 +13,7 @@ constexpr int nrow =1000;
 constexpr int ncol =6;
 constexpr int ycol =5;
 
-forest_lake forlake(10000);
+forest_lake forlake(5000);
 uint16_t n_train=500;
 float* Dp_train = DData;
 float* Dp_test = DData_test;
@@ -54,9 +54,15 @@ void loop(){
     forlake.truncate();
     forlake.grow(&X,&y);
     
+    
+    //forlake.print_nlines(130);
+    //delay(5000);
+
+    //forlake.print_splits(5000);
+    //delay(5000);
 
     double mean =0;
-    for(int i=0; i<n_train;i++) {mean += y  .at(i);}
+    for(int i=0; i<n_train;i++) {mean += y.at(i);}
     mean /= n_train;
     
     double sqerr  = 0;
@@ -69,7 +75,9 @@ void loop(){
         sqerr += sq(yval - pred);
         sqerr2+= sq(yval - mean);
 
-        //Serial.print(yval);Serial.print(" ,");Serial.println(pred);
+        /* Serial.print(yval);Serial.print(" ,");Serial.print(pred);
+        Serial.print(" ,");Serial.print  (X_test.at(i,0));
+        Serial.print(" ,");Serial.println(X_test.at(i,1));  */
     }
     
     double SD = sqrt(sqerr /(n_train-1));
