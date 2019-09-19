@@ -13,7 +13,7 @@ constexpr int nrow =1000;
 constexpr int ncol =6;
 constexpr int ycol =5;
 
-forest_lake forlake(5000);
+forest_lake forlake(12000);
 uint16_t n_train=500;
 float* Dp_train = DData;
 float* Dp_test = DData_test;
@@ -27,17 +27,10 @@ dynamic_vector<float,uint16_t> y_test = X_test.get_vector(ycol); //
 void setup() {
     Serial.begin(115200);
     Serial.println("ln29");
-
     X.print();
     
     X.truncate_col(); //revoke X's read/write access this last column
-    X.truncate_col();
-    X.truncate_col();
     X_test.truncate_col(); //revoke X's read/write access this last column
-    X_test.truncate_col(); //revoke X's read/write access this last column
-    X_test.truncate_col(); //revoke X's read/write access this last column
-    
-
 }
 
 

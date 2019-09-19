@@ -230,15 +230,13 @@ void forest_lake::grow(dynamic_array<float,uint16_t>* newX, dynamic_vector<float
 
     //run time pars
     const uint16_t p_depth = 7;
-    const uint16_t p_minnode = 5;
-    const uint16_t p_ntree = 50;
-    const uint16_t p_sampsize = 150;
+    const uint16_t p_minnode = 15;
+    const uint16_t p_ntree = 150;
+    const uint16_t p_sampsize = 450;
     
     
     //initialize allocate temporay data
     //make index of X, same dim as X
-    //uint16_t index_buffer[X->get_size()];
-    //dynamic_array<uint16_t,uint16_t> index_(index_buffer,X->get_size(),X->get_col());
     dynamic_array<uint16_t,uint16_t> index_(X->get_size(),X->get_col());
     index = &index_;
     for(uint16_t i=0 ; i<X->get_col(); i++) {
@@ -264,20 +262,15 @@ void forest_lake::grow(dynamic_array<float,uint16_t>* newX, dynamic_vector<float
     temp_node tnode[p_depth];
     for(uint16_t i = 0; i<p_depth;i++) tnode[i].innodep = innode.get_col_p(i);
     int16_t i_depth=0;     
-    int16_t x____test_n=0;
-    float   x____test_sum=0;
+    
+    // for debugging
+    //int16_t x____test_n=0;
+    //float   x____test_sum=0;
+    //-----
 
     while(two_more_nodes() && i_tree<p_ntree) {
         std::shuffle(innode_v0.begin(),innode_v0.end(),rng);
-        //for(bool* i =innode_v0.begin(); i<innode_v0.begin()+10; i++) Serial.print(*i); Serial.println(", ");      
 
-/*         for(int i=0; i<5;i++) {
-            Serial.print(innode_v0.at(i));
-               
-        } 
-        Serial.println("\n"); */
-        
-        
         //configure first tempoary node
         new_tree2();//tag marks a new tree starts in forest lake
         tnode[0].nodep = new_node2();
@@ -293,56 +286,29 @@ void forest_lake::grow(dynamic_array<float,uint16_t>* newX, dynamic_vector<float
         
         //grow tree
         while(i_depth>0 || tnode[0].status<2) {
-            
-
             if(i_depth<0 || i_depth>p_depth) {
                 error("seems we're in too deep or shallow");
             }
 
             tnode[i_depth].status++; //count visits to node
-
-            /* if(!two_more_nodes()) {
-                Serial.println("nodes info");
-                Serial.println(tnode[i_depth].status);
-                Serial.println(tnode[i_depth].n);
-                Serial.println(i_depth);
-            } */
             
             //conditions to break loop
             //out of nodes/trees, too deep, too few nodes
             if(tnode[i_depth].status == 1) {
                 
-                //a new node
+                //terminalize this node or split it?
                 if(i_depth>=p_depth-1 || tnode[i_depth].n<p_minnode || !two_more_nodes() ) {
-                    /* if(!two_more_nodes()) {
-                        Serial.println("nodes depleted");
-                        Serial.println(tnode[i_depth].status);
-                        Serial.println(tnode[i_depth].n);
-                        Serial.println(i_depth);
-                    } */
-
                     tnode[i_depth].nodep->makeTerminal(tnode[i_depth].mean_node(),tnode[i_depth].n);
-                    
-                    /* if(i_depth!=0) {
-                        Serial.print(i_depth);Serial.print(",");
-                        Serial.print(tnode[i_depth].nodep->bestvar);Serial.print(",");
-                        Serial.print(tnode[i_depth-1].nodep->splitval);Serial.print(",");
-                        Serial.println(tnode[i_depth].nodep->splitval);
-                    } */
-                    
-
                     if(i_depth==0) { //if main node is a terminal 
                         break; //stop growing this tree
                     } else {
-                        i_depth--;  //some other node was terminal
+                        i_depth--;  //some other not-main node was terminal
                         continue;   //go up one level
                     }
                 } else {
+                    
                     //start splitting
-
                     bestsplit(&tnode[i_depth]); //find best split
-
-                    //Serial.print(i_depth),Serial.print(i_depth)
 
                     //allocate right child node, no temp_node for now
                     tnode[i_depth].nodep->right_child_id = i_node; //place right child id in this parent node
@@ -352,8 +318,6 @@ void forest_lake::grow(dynamic_array<float,uint16_t>* newX, dynamic_vector<float
                     tnode[i_depth+1].nodep = new_node2(); //allocate left child
                     tnode[i_depth+1].sum = tnode[i_depth].lchild_sum;
                     tnode[i_depth+1].n   = tnode[i_depth].lchild_n;
-
-                   
                                    
                     //update left child temp_node innode by bestsplit
                     in_parent = tnode[i_depth  ].innodep;
@@ -361,20 +325,20 @@ void forest_lake::grow(dynamic_array<float,uint16_t>* newX, dynamic_vector<float
                     x = X->get_col_p(tnode[i_depth].nodep->bestvar);
                     idx = index->get_col_p(tnode[i_depth].nodep->bestvar);
                     splitval = tnode[i_depth].nodep->splitval;
-                    x____test_n=0;
-                    x____test_sum=0;
+                    
+                    //x____test_n=0;
+                    //x____test_sum=0;
                     //int x_test_innode=0;
                     for(uint16_t i=0; i<X->get_row(); i++) {
-                        
                         in_child[i] = in_parent[i] && (x[i] >= splitval);
-                        if(in_child[i]) {
+/*                         if(in_child[i]) {
                             x____test_n++;
                             x____test_sum += y->at(i);
-                        }
+                        } */
                         //if(in_parent[i]) x_test_innode++;
                     }
                     
-                    if(
+                    /* if(
                         x____test_n != tnode[i_depth].lchild_n ||
                         Abs(x____test_sum - tnode[i_depth].lchild_sum)>0.001
                     ) {
@@ -386,8 +350,7 @@ void forest_lake::grow(dynamic_array<float,uint16_t>* newX, dynamic_vector<float
                         Serial.print(" lfound: ");Serial.println(x____test_n);
                         error("wrong left n");
                     }
-
-                    
+ */   
 
                      //go to left child
                     tnode[i_depth+1].status=0; //reset child status(n_visits) to zero
@@ -410,22 +373,22 @@ void forest_lake::grow(dynamic_array<float,uint16_t>* newX, dynamic_vector<float
                     x = X->get_col_p(tnode[i_depth].nodep->bestvar);
                     idx = index->get_col_p(tnode[i_depth].nodep->bestvar);
                     splitval = tnode[i_depth].nodep->splitval;
-                    x____test_n=0; //debug only
+                    //x____test_n=0; //debug only
                     for(uint16_t i=0; i<X->get_row(); i++) {
                         in_child[i] = in_parent[i] && x[i] < splitval; //random tie handling also here?
-                        if(in_child[i]) x____test_n++; //debug only
+                       // if(in_child[i]) x____test_n++; //debug only
                     }
                     
                     //debug
-                    if(x____test_n != tnode[i_depth].rchild_n) {
+                    /* if(x____test_n != tnode[i_depth].rchild_n) {
                         Serial.print(" lsought:");Serial.print(tnode[i_depth].lchild_n);
                         Serial.print(" rsought:");Serial.print(tnode[i_depth].rchild_n);
                         Serial.print(" rfound: ");Serial.println(x____test_n);
                         error("wrong right n");
-                    }
+                     }
 
                     
-/*                     temp_node tmp_r = tnode[i_depth+1];
+                    temp_node tmp_r = tnode[i_depth+1];
 
                     Serial.print("children mean:");
                     Serial.print((tmp_l.mean_node() * tmp_l.n + tmp_r.mean_node() * tmp_r.n) / (tmp_l.n+tmp_r.n) );
@@ -436,7 +399,6 @@ void forest_lake::grow(dynamic_array<float,uint16_t>* newX, dynamic_vector<float
                     tnode[i_depth+1].status=0;
                     i_depth++;
                     continue;
-
                 } else {
                     if(tnode[i_depth].status == 3) {
                         //comming back from right - go up
