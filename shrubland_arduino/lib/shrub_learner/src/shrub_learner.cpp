@@ -236,7 +236,7 @@ void forest_lake::grow(dynamic_array<float,uint16_t>* newX, dynamic_vector<float
     bool* in_parent = nullptr;
     bool* in_child  = nullptr;
     float* x = nullptr;
-    uint16_t* idx = nullptr;
+    //uint16_t* idx = nullptr;
     float splitval = 0;
                     
 
@@ -335,7 +335,7 @@ void forest_lake::grow(dynamic_array<float,uint16_t>* newX, dynamic_vector<float
                     in_parent = tnode[i_depth  ].innodep;
                     in_child  = tnode[i_depth+1].innodep;
                     x = X->get_col_p(tnode[i_depth].nodep->bestvar);
-                    idx = index->get_col_p(tnode[i_depth].nodep->bestvar);
+                    //idx = index->get_col_p(tnode[i_depth].nodep->bestvar);
                     splitval = tnode[i_depth].nodep->splitval;
                     
                     //x____test_n=0;
@@ -383,7 +383,7 @@ void forest_lake::grow(dynamic_array<float,uint16_t>* newX, dynamic_vector<float
                     in_parent = tnode[i_depth  ].innodep;
                     in_child  = tnode[i_depth+1].innodep;
                     x = X->get_col_p(tnode[i_depth].nodep->bestvar);
-                    idx = index->get_col_p(tnode[i_depth].nodep->bestvar);
+                    //idx = index->get_col_p(tnode[i_depth].nodep->bestvar);
                     splitval = tnode[i_depth].nodep->splitval;
                     //x____test_n=0; //debug only
                     for(uint16_t i=0; i<X->get_row(); i++) {
