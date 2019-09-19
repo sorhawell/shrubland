@@ -157,6 +157,7 @@ void forest_lake::bestsplit(temp_node* snode) {
     uint16_t tieVal{0}, prev{0}, curr{0}, i_idx{0}, n_r{0}, n_l{0}; //dummy init
     const uint16_t n_obs = X->get_row();
     bool* innodep = snode->innodep;
+    float* yp = y->begin();
     
     for(uint16_t i_var=0; i_var < X->get_col();i_var++) { //iterate each variable
         
@@ -169,31 +170,24 @@ void forest_lake::bestsplit(temp_node* snode) {
         
         //set initial state split search
         prev=curr;
-        sum_r = y->get(curr);
-        sum_l = snode->sum - y->get(curr);
+        sum_r = yp[curr];
+        sum_l = snode->sum - yp[curr];
         n_r = 1;
         n_l = snode->n - 1 ;
         
         //check all splits
-        for(; i_idx<n_obs && n_l>2; i_idx++) {
-            
+        for(; i_idx<n_obs; i_idx++) {
             curr = i_var_indexed[i_idx];
             if(!innodep[curr]) continue;  //check if indexed obs is innode
             
             if(n_r>2 || crit==-1) {
                 crit = (sum_l * sum_l / n_l) + (sum_r * sum_r / n_r);// - crit_parent;
                 if (crit >= critmax && x[curr]!=x[prev]) {  //handle better crit, accept new split
-                    if (crit == critmax) { //handle as tie
-                        tieVal++;
-                    } else { //handle as tie
-                        tieVal = 1;
-                        critmax = crit;
-                    }
-                    if (crit != critmax || uint_dist(rng) < UINT32_MAX / tieVal) { //update
+                    tieVal *=     (crit==critmax);
+                    tieVal += 1 - (crit==critmax);
+                    critmax = crit;
+                    if (crit != critmax || uint_dist(rng) < UINT32_MAX / ++tieVal) { //update
                             snode->nodep->splitval = (x[curr] + x[prev]) / 2.0;
-                            //Serial.print(crit);Serial.print(" ");Serial.print(n_l);Serial.print(" ");
-                            //Serial.print(i_var);Serial.print(" ");
-                            //Serial.println(snode->nodep->splitval );
                             snode->nodep->bestvar = i_var;
                             snode->lchild_n = n_l;
                             snode->rchild_n = n_r;
@@ -204,10 +198,11 @@ void forest_lake::bestsplit(temp_node* snode) {
             }
             //update indexes etc.
             prev = curr;
-            curr_y = y->get(curr);
+            curr_y = yp[curr];
             sum_r += curr_y;
             sum_l -= curr_y;
-            n_r++; n_l--;
+            n_r++;
+            if(--n_l<=2) break;
             
         }
     }
