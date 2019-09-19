@@ -241,10 +241,10 @@ void forest_lake::grow(dynamic_array<float,uint16_t>* newX, dynamic_vector<float
                     
 
     //run time pars
-    const uint16_t p_depth = 7;
-    const uint16_t p_minnode = 15;
-    const uint16_t p_ntree = 150;
-    const uint16_t p_sampsize = 450;
+    const uint16_t p_depth = 10;
+    const uint16_t p_minnode = 5;
+    const uint16_t p_ntree = 100;
+    const uint16_t p_sampsize = 350;
     
     
     //initialize allocate temporay data
@@ -261,7 +261,7 @@ void forest_lake::grow(dynamic_array<float,uint16_t>* newX, dynamic_vector<float
     }
 
     //make inbag/innode sampling
-    uint16_t innode_sz{X->get_row()*p_depth};
+    uint16_t innode_sz{p_depth*X->get_row()};
     //bool innode_buffer[innode_sz];
     dynamic_array <bool,uint16_t> innode(innode_sz,p_depth);
     dynamic_vector<bool,uint16_t> innode_v0 = innode.get_vector(0);

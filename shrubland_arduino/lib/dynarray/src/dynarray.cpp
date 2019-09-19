@@ -278,8 +278,8 @@ void dynamic_array<T,S>::fillCSV(std::string path) {
 };
  */
 
-template class dynamic_array<double, int>;
-template class dynamic_vector<double, int>;
+//template class dynamic_array<double, int>;
+//template class dynamic_vector<double, int>;
 template class dynamic_array<float, uint16_t>;
 template class dynamic_vector<float, uint16_t>;
 template class dynamic_array<uint16_t, uint16_t>;
