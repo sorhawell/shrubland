@@ -8,8 +8,11 @@
 #include <chrono>
 #include <iomanip>
 #include "Profileapi.h"
-#include "dynarray.h"
-#include "shrub_learner.h"
+//#include "./shrubland_arduino/lib/dynarray/src/dynarray.h"
+#include "./shrubland_arduino/lib/shrub_learner/src/shrub_learner.h"
+//#include "shrub_learner.h"
+
+
 
 using namespace std;
 
@@ -46,12 +49,11 @@ constexpr int nrow =1000;
 constexpr int ncol =6;
 constexpr int ycol =5;
 
-
-
 int main() {
 
+
     
-    //std::shared_ptr<dynamic_array<double,int>> sp3(new dynamic_array<double,int>(5,10), array_deleter<dynamic_array<double,int>>());
+    /* //std::shared_ptr<dynamic_array<double,int>> sp3(new dynamic_array<double,int>(5,10), array_deleter<dynamic_array<double,int>>());
     //std::cout << "\n ncopy:" <<sp3.use_count();
     Timer.setFreq();
 
@@ -80,12 +82,12 @@ int main() {
         X.assign(X2); //copy to X2 and give away ownership for heap mem to X2
         X2.assign(X);
         X.assign(X2);
-        //X is deleted, X2 survives and has ownership to data
-    }  
+        //X is deleted, X2 survives and has ownership to data */
+    };  
     
 
     
-    std::cout << std::fixed;
+    /* std::cout << std::fixed;
     std::cout << std::setprecision(3);
 
    
@@ -99,7 +101,7 @@ int main() {
         std::cout<< "\n" << result ;//<< " , " << y.get(i);
 
     }
-    
+     */
 
     //forlake.print_nlines(50);
 
@@ -210,4 +212,4 @@ int main() {
         sf.forest.nodes[i].print_body();
         cout << "\t\t" << j_tree;
     }   */
-}
+

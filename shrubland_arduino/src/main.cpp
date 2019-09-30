@@ -5,6 +5,8 @@
 #include <testdata.h>
 
 
+
+
 using namespace std;
 
 constexpr int ntree=50;
@@ -24,13 +26,22 @@ dynamic_vector<float,uint16_t> y = X.get_vector(ycol); //
 dynamic_vector<float,uint16_t> y_test = X_test.get_vector(ycol); //
     
 
+//#define sprintf(b) (Serial.printf(b));
+
 void setup() {
+
+
     Serial.begin(115200);
     Serial.println("ln29");
     X.print();
     
     X.truncate_col(); //revoke X's read/write access this last column
     X_test.truncate_col(); //revoke X's read/write access this last column
+    
+    
+    sprint(42);
+    sprint("hehej");
+
 }
 
 
@@ -38,15 +49,19 @@ int sum_time{0};
 float sum_error{0};
 int n_trials{0};
 void loop(){
-    n_trials++;
+     n_trials++;
  
     //X2 = X; // not public accessible use instead .assign method instead
     int startTime;
     int endTime;
     startTime = millis();
     forlake.truncate();
-    forlake.grow(&X,&y);
+    forlake.rec_grow(&X,&y);
+    endTime = millis();
+    //Serial.println(endTime-startTime);
     
+    forlake.print_nlines(500);
+
     
     //forlake.print_nlines(130);
     //delay(5000);
@@ -68,9 +83,9 @@ void loop(){
         sqerr += sq(yval - pred);
         sqerr2+= sq(yval - mean);
 
-        /* Serial.print(yval);Serial.print(" ,");Serial.print(pred);
+        Serial.print(yval);Serial.print(" ,");Serial.print(pred);
         Serial.print(" ,");Serial.print  (X_test.at(i,0));
-        Serial.print(" ,");Serial.println(X_test.at(i,1));  */
+        Serial.print(" ,");Serial.println(X_test.at(i,1)); 
     }
     
     double SD = sqrt(sqerr /(n_train-1));
@@ -86,10 +101,13 @@ void loop(){
     Serial.print("  time is:"); Serial.print(endTime-startTime);
     sum_time += endTime-startTime;
     Serial.print(" avg.:"); Serial.print(sum_time/n_trials);
-    Serial.print(" forlake.i_node"); Serial.print(forlake.i_node);
+    Serial.print(" i_node:"); Serial.print(forlake.i_node);
+    Serial.print(" i_tree:"); Serial.print(forlake.i_tree);
     
     //Serial.println(forlake.i_node);
 
     Serial.println("...");
+
+    delay(3000);
 }
 

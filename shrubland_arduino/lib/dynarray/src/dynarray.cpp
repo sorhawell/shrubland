@@ -1,9 +1,27 @@
-#include <Arduino.h>
-#include "dynarray.h"
+
+
+
+#ifdef testpc
+    #include iostream
+    #include "../../dynarray/src/dynarray.h"
+#else
+    #include <Arduino.h>
+    #include "dynarray.h"
+#endif
+void sprint(int x) {Serial.print(x);}
+void sprint(uint16_t x) {Serial.print(x);}
+void sprint(const char x[]) {Serial.print(x);}
+void sprint(float x) {Serial.print(x);}
+void sprintln(int x) {Serial.println(x);}
+void sprintln(uint16_t x) {Serial.println(x);}
+void sprintln(const char x[]) {Serial.println(x);}
+void sprintln(float x) {Serial.println(x);}
+void sprint(float x, uint16_t n) {Serial.print(x,n);}
+void sprintln(float x, uint16_t n) {Serial.println(x,n);}
 
 //simple error handle
 void error(const char* msg) {
-    Serial.println(msg); //print msg to Serial
+    sprint(msg); //print msg to Serial
     while(true) {
         delay(5000); //halt execution forever
     }
@@ -18,6 +36,18 @@ uint16_t stox(uint16_t* pd, std::string str) {return(uint16_t(str));}
  */
 
 //void error(const char* e) {throw runtime_error(e);}
+/* template <class T>
+dynamic_segment<T>::dynamic_segment(T* begin, T* end):
+    dyn_vec(begin), dyn_end(end) {};
+
+template <class T>
+T* dynamic_segment<T>::begin() {
+    return(dyn_vec);
+}
+template <class T>
+T* dynamic_segment<T>::end() {
+    return(dyn_end);
+} */
 
 template <class T, class S>
 dynamic_vector<T,S>::dynamic_vector(T* begin, S size):
@@ -44,10 +74,10 @@ T dynamic_vector<T,S>::next() {
 
 template <class T, class S>
 void dynamic_vector<T,S>::print() {
-   Serial.print("\n size:");
-   Serial.println(sz);
+   sprint("\n size:");
+   sprintln(sz);
    for(S i =0; i<5&&i<sz; i++) {
-        Serial.println(i);
+        sprint(i);
     }
 }
 
@@ -60,9 +90,6 @@ template <class T, class S>
 T* dynamic_vector<T,S>::end() {
     return(dyn_vec+sz);
 }
-
-
-
 
 template <class T, class S>
 dynamic_array<T,S>::dynamic_array(T* begin, S size, S ncol):
@@ -80,9 +107,9 @@ dynamic_array<T,S>::dynamic_array(S size, S ncol):
 
 template <class T, class S>
 dynamic_array<T,S>::~dynamic_array() {
-    //Serial.println("\n dynarray deleted");
+    //sprint("\n dynarray deleted");
     if(ownership) {
-        //Serial.println("with ownership to heap");
+        //sprint("with ownership to heap");
         delete[] dyn_array;
     }
     
@@ -192,19 +219,19 @@ dynamic_vector<T,S> dynamic_array<T,S>::get_vector(S i_col) {
 
 template <class T, class S>
 void dynamic_array<T,S>::print() {
-    Serial.print("\n dim: [");
-    Serial.print(n_row);
-    Serial.print("]x[");
-    Serial.print(n_col);
-    Serial.print("] size:");
-    Serial.println(sz);
+    sprint("\n dim: [");
+    sprint(n_row);
+    sprint("]x[");
+    sprint(n_col);
+    sprint("] size:");
+    sprint(sz);
     
     for(int i=0 ; i<5; i++) {
         for(int j=0; j<n_col; j++) {
-            Serial.print(this->at(i,j),5);
-            Serial.print("  \t, ");
+            sprint(this->at(i,j),5);
+            sprint("  \t, ");
         }
-        Serial.print("\n");
+        sprint("\n");
     } 
 }
 
@@ -286,4 +313,3 @@ template class dynamic_array<uint16_t, uint16_t>;
 template class dynamic_vector<uint16_t, uint16_t>;
 template class dynamic_array <bool,uint16_t>;
 template class dynamic_vector <bool,uint16_t>;
-

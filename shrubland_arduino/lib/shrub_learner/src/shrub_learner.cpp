@@ -8,6 +8,7 @@ void initialize() {
 }
 std::uniform_int_distribution<uint32_t> uint_dist;
 
+
 //stack_node is tempoary node information placed on the stack
 //stack_node information is dropped when node goes out of scope of recursive algorithm
 
@@ -74,6 +75,12 @@ void node::makeTerminal(float pred_value, uint16_t terminal_n) {
     splitval = pred_value;
 }
 
+void node::makeTerminal(uint16_t terminal_n) {
+    right_child_id = 0;
+    bestvar = terminal_n;
+    splitval /= terminal_n;
+}
+
 temp_node::temp_node() :
     n(0),sum(0),status(0), innodep(nullptr), nodep(nullptr),
     lchild_sum(0), rchild_sum(0), lchild_n(0), rchild_n(0)  {}
@@ -87,12 +94,14 @@ float temp_node::mean_node() {
 //A learner can acuire new nodes and trees from here.
 //when pool is exhausted, the learner will gracefully complete its job.
 forest_lake::forest_lake(node* nds,uint16_t size) :
+    X(nullptr), y(nullptr), index(nullptr) ,
     ownership(false), nodes(nds), n_nodes(size), i_node(0), n_nodes_i_tree(0), i_tree(0),
-    X(nullptr), y(nullptr), index(nullptr) {};
+    temp_node_sum_left(0),temp_node_sum_right(0) {};
 
 forest_lake::forest_lake(uint16_t size) :
-ownership(true), nodes(nullptr), n_nodes(size), i_node(0), n_nodes_i_tree(0), i_tree(0),
-X(nullptr), y(nullptr), index(nullptr) {
+    X(nullptr), y(nullptr), index(nullptr) ,
+    ownership(true), nodes(nullptr), n_nodes(size), i_node(0), n_nodes_i_tree(0), i_tree(0),
+    temp_node_sum_left(0),temp_node_sum_right(0) {
     nodes = new node[n_nodes];
 };
 
@@ -121,6 +130,22 @@ node* forest_lake::new_node2() {
     if(i_node==n_nodes) error("no more nodes");
     n_nodes_i_tree++;
     return(&nodes[i_node++]);
+}
+
+node* forest_lake::new_node2(float sum) {
+    if(i_node==n_nodes) error("no more nodes");
+    n_nodes_i_tree++;
+    nodes[i_node++].splitval = sum;
+    return(&nodes[i_node]);
+}
+
+node* forest_lake::new_node3(float sum) {
+    if(i_node==n_nodes) error("no more nodes");
+    node* newnode = &nodes[i_node];
+    n_nodes_i_tree++;
+    nodes[i_node].splitval = sum;
+    i_node++;
+    return(newnode);
 }
 
 node& forest_lake::new_tree() {
@@ -241,10 +266,10 @@ void forest_lake::grow(dynamic_array<float,uint16_t>* newX, dynamic_vector<float
                     
 
     //run time pars
-    const uint16_t p_depth = 10;
+    const uint16_t p_depth = 7;
     const uint16_t p_minnode = 5;
-    const uint16_t p_ntree = 100;
-    const uint16_t p_sampsize = 350;
+    const uint16_t p_ntree = 1;
+    const uint16_t p_sampsize = 150;
     
     
     //initialize allocate temporay data
@@ -439,6 +464,173 @@ void forest_lake::grow(dynamic_array<float,uint16_t>* newX, dynamic_vector<float
 }
 
 
+
+void forest_lake::rec_grow(dynamic_array<float,uint16_t>* newX, dynamic_vector<float,uint16_t>* newy) {
+    
+        //run time pars
+    const uint16_t p_depth = 3;
+    const uint16_t p_minnode = 5;
+    const uint16_t p_ntree = 150;
+    const uint16_t p_sampsize = 500;
+    
+    
+    X = newX;
+    y = newy;
+    
+    //allocate on heap, p_sampsize;
+    dynamic_array<uint16_t,uint16_t> SEG(p_sampsize,1);
+    dynamic_vector<uint16_t,uint16_t> vec = SEG.get_vector(0);
+  
+    while(two_more_nodes() && i_tree<p_ntree) {
+        //grow tree
+        //Serial.print("inode479");Serial.println(i_node);
+        new_tree2(); //tree tag marks a new tree starts in forest lake
+        //Serial.print("inode482");Serial.println(i_node);
+
+        //draw random sample with replacement into seg(ment) and compute target sum of nodes
+        temp_node_sum_left=0;
+        for(auto& i : vec) {
+            i = uint_dist(rng) % p_sampsize;
+            temp_node_sum_left += y->at(i);
+        }
+        //Serial.print("inode489 ");Serial.println(i_node);
+        node* root_nodep = new_node3(-42);
+        /* Serial.print("inode491 ");Serial.println(i_node);
+        Serial.print("addrdiff ");Serial.println(int(root_nodep-nodes));
+        Serial.println(int(&nodes));
+        Serial.println(int(&nodes[0]));
+        Serial.println(int(&nodes[1]));
+        Serial.println(int(root_nodep)); */
+
+       // for(auto& i : vec) {Serial.print(i);Serial.print(", ");}
+        
+        //grow this tree recursively
+        grow_node(vec.begin(),vec.end(),root_nodep,1);
+    }
+}
+
+void forest_lake::grow_node(uint16_t* Sp, uint16_t* Ep, node* parent_node, uint16_t depth) {
+    //Serial.print("\n entering node: ");Serial.println(int(parent_node-nodes));
+    //Serial.print("\n i_node: ");Serial.println(i_node);
+    //Serial.print('\n');
+    //Serial.print(depth);
+    //either terminate this node and return...
+    if(Ep-Sp<=5 || depth>=7 || !two_more_nodes()) {
+        //Serial.print(" t");
+        //Serial.println("terminal");
+        float predSum{0};
+        uint16_t* i=Sp;
+        while(i!=Ep) {
+            predSum += y->at(*i);
+            i++;
+        }
+        parent_node->makeTerminal(predSum/(Ep-Sp),Ep-Sp); // "save to forest_lake_pointer"
+        return;
+    }
+    //otherwise allocate new nodes, split and jump to child nodes
+    uint16_t* Cp{Sp+1};
+    recsplit(Sp,Ep,Cp,parent_node);
+   
+    node* right_node = new_node3(-42.0);
+    node* left_node  = new_node3(42.0);
+  
+    grow_node(Sp,Cp,right_node,depth+1);
+    grow_node(Cp,Ep,left_node ,depth+1);
+   
+}
+    
+void forest_lake::recsplit(
+    uint16_t* Sp, uint16_t* Ep, uint16_t*& Cp, node* parent_node
+) {
+    
+    //internal variables
+    uint16_t parent_n{Ep-Sp};
+    float crit{-1}, critmax{-1.0}, prev_y{0}, sum_r{0}, sum_l{0}, best_sum{0}, best_splitval{0};
+    uint16_t tieVal{0}, prev{0}, curr{0}, n_r{0}, n_l{0}, best_var{0};
+    const uint16_t n_col{X->get_col()}; //dummy init
+    uint16_t* i_Cp{nullptr};
+    
+    constexpr uint16_t p_minsplit=2;
+    if(p_minsplit>=parent_n) error("p_minsplit is set too high");
+
+    float* yp = y->begin();
+
+    float predSum{0};
+    {
+        //Serial.print(" ps");
+        uint16_t* i=Sp;
+        while(i!=Ep) {
+            predSum += y->at(*i);
+            i++;
+        }
+    }
+
+    //iterate each variable
+    for(uint16_t i_var=0; i_var < n_col;i_var++) {
+
+        i_Cp = Sp;
+        const auto* x = X->get_col_p(i_var); //reference to column for this variable in matrix
+        std::sort(Sp,Ep,[x](size_t i1, size_t i2) {return x[i1] < x [i2];}); //sort by x feature column
+    
+        //set sums and counters before rolling mean square error crit
+        n_r = p_minsplit;
+        n_l = parent_n-p_minsplit;
+        sum_r=0;
+        sum_l=predSum;//parent_node->splitval;
+        
+        for(uint16_t i =0;i<p_minsplit;i++) {
+            prev    = *i_Cp;
+            prev_y  = yp[prev];
+            sum_r  += prev_y;
+            sum_l  -= prev_y;
+            ++i_Cp;
+        }        
+        
+        //iterate all splits and compute rolling mean square error crit
+        for(;i_Cp!=Ep;i_Cp++) {
+            //update state
+            if(--n_l<=p_minsplit) break; //
+            n_r++;
+            prev = curr;
+            curr = *i_Cp;
+            prev_y = yp[prev];
+            sum_r += prev_y;
+            sum_l -= prev_y;
+            if(curr==prev && x[curr]==x[prev]) continue; //same value skip crit
+            
+            //compute loss/crit
+            crit = (sum_l * sum_l / n_l) + (sum_r * sum_r / n_r);// - crit_parent;
+
+            //if critmax save
+            if (crit >= critmax) {  //handle better crit, accept new split
+                if (crit!=critmax) tieVal=0;
+                if (crit!=critmax || uint_dist(rng) > UINT32_MAX / ++tieVal) { //update
+                    Cp  = i_Cp;
+                    best_var = i_var;
+                    best_sum = sum_l;
+                    best_splitval = (x[curr]+x[prev])/2;
+                }
+                critmax = crit;
+            }            
+        }
+    }
+
+    parent_node->right_child_id = i_node;
+    parent_node->bestvar = best_var;
+    //temp_node_sum_left = best_sum;
+    //temp_node_sum_right = parent_node->splitval - best_sum;
+    //Serial.print(" sv ");
+    //Serial.print(int(Cp-Sp));
+    
+    //resort by best split
+    const auto* x = X->get_col_p(best_var); //reference to column for this variable in matrix
+    std::sort(Sp,Ep,[x](size_t i1, size_t i2) {return x[i1] < x [i2];}); //sort by x feature column
+    //parent_node->splitval = (X->at(*(Cp-1),best_var) + X->at(*Cp,best_var))/2;
+    parent_node->splitval = best_splitval;
+
+}
+
+
 float forest_lake::predict(dynamic_array<float,uint16_t>* X,uint16_t i_row){
     
     //copy 
@@ -461,10 +653,9 @@ float forest_lake::predict(dynamic_array<float,uint16_t>* X,uint16_t i_row){
                 if(nodes[k_node].right_child_id!=0) {
                     
                     //this node is intermediary
+                    k_node = nodes[k_node].right_child_id;
                     if(xnew[nodes[k_node].bestvar] >= nodes[k_node].splitval) {
-                      k_node = nodes[k_node].right_child_id + 1 ;
-                    } else {
-                      k_node = nodes[k_node].right_child_id;
+                      k_node++;
                     }
                     
                     
