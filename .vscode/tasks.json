@@ -10,8 +10,8 @@
                 "-D testpc",
                // "-Wno-deprecated",
                 "-g",
-                "dynarray.cpp",
-                "shrub_learner.cpp",
+                "./shrubland_arduino/lib/dynarray/src/dynarray.cpp",
+                "./shrubland_arduino/lib/shrub_learner/src/shrub_learner.cpp",
                 "main.cpp",
                 "-o",
                 "main"

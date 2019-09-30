@@ -2,30 +2,58 @@
 
 
 #ifdef testpc
-    #include iostream
-    #include "../../dynarray/src/dynarray.h"
+    #include "dynarray.h"
+    #include <algorithm>
+    
+    void sprint    (int x)                 {std::cout<<x;}
+    void sprint    (uint16_t x)            {std::cout<<x;}
+    void sprint    (const char x[])        {std::cout<<x;}
+    void sprint    (float x)               {std::cout<<x;}
+    void sprint    (float x, uint16_t n)   {std::cout<<x;}
+    void sprintln  (int x)                 {std::cout<<x<<'\n';}
+    void sprintln  (uint16_t x)            {std::cout<<x<<'\n';}
+    void sprintln  (const char x[])        {std::cout<<x<<'\n';}
+    void sprintln  (float x)               {std::cout<<x<<'\n';}
+
+    void sprintln  (float x, uint16_t n)   {std::cout<<x<<'\n';}
+    void sprintln()                        {std::cout   <<'\n';}
+
+    void error(const char* e) {throw std::runtime_error(e);}
+
+    
+
 #else
     #include <Arduino.h>
     #include "dynarray.h"
-#endif
-void sprint(int x) {Serial.print(x);}
-void sprint(uint16_t x) {Serial.print(x);}
-void sprint(const char x[]) {Serial.print(x);}
-void sprint(float x) {Serial.print(x);}
-void sprintln(int x) {Serial.println(x);}
-void sprintln(uint16_t x) {Serial.println(x);}
-void sprintln(const char x[]) {Serial.println(x);}
-void sprintln(float x) {Serial.println(x);}
-void sprint(float x, uint16_t n) {Serial.print(x,n);}
-void sprintln(float x, uint16_t n) {Serial.println(x,n);}
-
-//simple error handle
-void error(const char* msg) {
-    sprint(msg); //print msg to Serial
-    while(true) {
-        delay(5000); //halt execution forever
+    void sprint(int x) {Serial.print(x);}
+    void sprint(uint16_t x) {Serial.print(x);}
+    void sprint(const char x[]) {Serial.print(x);}
+    void sprint(float x) {Serial.print(x);}
+    void sprintln(int x) {Serial.println(x);}
+    void sprintln(uint16_t x) {Serial.println(x);}
+    void sprintln(const char x[]) {Serial.println(x);}
+    void sprintln(float x) {Serial.println(x);}
+    void sprint(float x, uint16_t n) {Serial.print(x,n);}
+    void sprintln(float x, uint16_t n) {Serial.println(x,n);}
+    void sprintln() {Serial.println();}
+     
+    //simple error handle
+    void error(const char* msg) {
+        sprint(msg); //print msg to Serial
+        while(true) {
+            delay(5000); //halt execution forever
+        }
     }
-}
+
+/*     #define sprint(x) (Serial.print(x));
+    #define sprintln(x) (Serial.println(x));
+    #define sprint(x,n) (Serial.print(x,n));
+    #define sprintln(x,n) (Serial.println(x,n)); */
+
+#endif
+
+
+
 
 //handle different conversions
 /* double stox(double* pd, std::string str) {return(double(str));}
@@ -219,12 +247,13 @@ dynamic_vector<T,S> dynamic_array<T,S>::get_vector(S i_col) {
 
 template <class T, class S>
 void dynamic_array<T,S>::print() {
+
     sprint("\n dim: [");
     sprint(n_row);
     sprint("]x[");
     sprint(n_col);
     sprint("] size:");
-    sprint(sz);
+    sprintln(sz);
     
     for(int i=0 ; i<5; i++) {
         for(int j=0; j<n_col; j++) {

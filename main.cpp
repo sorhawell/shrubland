@@ -1,15 +1,15 @@
-#include <algorithm>
-#include <iostream>
-#include <string>
-#include <fstream>
-#include <sstream>
-#include <vector>
-#include <random>
-#include <chrono>
-#include <iomanip>
+//#include <algorithm>
+//#include <string>
+//#include <fstream>
+//#include <sstream>
+//#include <vector>
+//#include <random>
+//#include <chrono>
+//#include <iomanip>
 #include "Profileapi.h"
-//#include "./shrubland_arduino/lib/dynarray/src/dynarray.h"
-#include "./shrubland_arduino/lib/shrub_learner/src/shrub_learner.h"
+#include "./shrubland_arduino/lib/dynarray/src/dynarray.h"
+//#include "./shrubland_arduino/lib/shrub_learner/src/shrub_learner.h"
+#include "./shrubland_arduino/lib/testdata/src/testdata.h"
 //#include "shrub_learner.h"
 
 
@@ -43,14 +43,32 @@ double CPUtimer::stop()  {
 }    
 CPUtimer Timer;
 
+
 constexpr int ntree=50;
 constexpr int nnode=50*300;
 constexpr int nrow =1000;
 constexpr int ncol =6;
 constexpr int ycol =5;
 
-int main() {
 
+
+
+//forest_lake forlake(uint16_t(12000));
+uint16_t n_train=500;
+float* Dp_train = DData;
+float* Dp_test = DData_test;
+
+dynamic_array<float,uint16_t> X(Dp_train    , n_train*ncol,ncol);
+dynamic_array<float,uint16_t> X_test(Dp_test, n_train*ncol,ncol);
+dynamic_vector<float,uint16_t> y = X.get_vector(ycol); //
+dynamic_vector<float,uint16_t> y_test = X_test.get_vector(ycol); //
+    
+
+int main() {
+    sprintln(42);
+    X.print();
+    X.truncate_col(); //revoke X's read/write access this last column
+    X_test.truncate_col(); //revoke X's read/write access this last column
 
     
     /* //std::shared_ptr<dynamic_array<double,int>> sp3(new dynamic_array<double,int>(5,10), array_deleter<dynamic_array<double,int>>());

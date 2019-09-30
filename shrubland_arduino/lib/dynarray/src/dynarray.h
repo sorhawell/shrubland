@@ -1,19 +1,20 @@
 #pragma once
 #ifdef testpc
-    #include iostream
+    #include <iostream>
 #else
     #include <Arduino.h>
 #endif
+void sprint(int x);
+void sprint(uint16_t x);
+void sprint(float x);
+void sprint(const char x[]);
+void sprintln(int x);
+void sprintln(uint16_t x);
+void sprintln(float x);
+void sprintln(const char x[]);
+void sprintln();
 
 
-    void sprint(int x);
-    void sprint(uint16_t x);
-    void sprint(float x);
-    void sprint(const char x[]);
-    void sprintln(int x);
-    void sprintln(uint16_t x);
-    void sprintln(float x);
-    void sprintln(const char x[]);
 //#include <adaptor.h>
 
 //print adaptors
