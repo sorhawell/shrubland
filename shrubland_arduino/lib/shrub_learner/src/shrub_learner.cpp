@@ -628,6 +628,8 @@ void forest_lake::recsplit(
     //parent_node->splitval = (X->at(*(Cp-1),best_var) + X->at(*Cp,best_var))/2;
     parent_node->splitval = best_splitval;
 
+    //if split success Cp will not point as Sp
+    return Cp!=Sp+1;
 }
 
 
@@ -646,35 +648,31 @@ float forest_lake::predict(dynamic_array<float,uint16_t>* X,uint16_t i_row){
             if(j_tree>=i_tree) break;
           
             k_node = j_node + 1; //iterate tree
-            //sprintln("k_node init:");sprintln(k_node);
+
             while(true) {
-                /* nodes[k_node].print_body();
-                sprintln(" |"); */
-                if(nodes[k_node].right_child_id!=0) {
+
+                node& this_node = nodes[k_node];
+                if(this_node.right_child_id!=0) {
                     
                     //this node is intermediary
-                    k_node = nodes[k_node].right_child_id;
-                    if(xnew[nodes[k_node].bestvar] >= nodes[k_node].splitval) {
+                    k_node = this_node.right_child_id;
+                    if(xnew[this_node.bestvar] >= this_node.splitval) {
                       k_node++;
                     }
-                    
+
                     
                 //sprint("[");sprint(k_node);sprint("]");
                 } else {
                     
                     //this node is terminal
                     j_tree++;
-                    prediction += nodes[k_node].splitval;
-                   
-
-                    //sprint(", (");sprint(nodes[k_node].bestvar);sprint(")");
-                    //sprint(nodes[k_node].splitval);
+                    prediction += this_node.splitval;
                     j_node = k_node; //new tree cant possibly start before k_node
                     break;
                 }
             }
         }
     }
-    //sprint(" = ");sprintln(prediction/j_tree);
+
     return(prediction/j_tree);
 }
