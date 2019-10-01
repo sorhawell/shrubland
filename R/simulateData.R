@@ -13,12 +13,10 @@ test  = makeXY();
 
 Time = system.time({
   for(i_turns in 1:10) {
-  rf = randomForest(train$X,train$y,ntree=61,sampsize=450,mtry =5,replace = TRUE)
+  rf = randomForest(train$X,train$y,ntree=61,sampsize=400,mtry =5,replace = TRUE,nodesize=50)
   rf
   
   preds = predict(rf,test$X)
-  plot(test$y,preds)
-  cor(preds,test$y)^2
   rf
   
   yt= train$y
@@ -31,7 +29,7 @@ Time = system.time({
   }
   
 })
-Time*10
+Time/10
 #diagnosttics
 
 
