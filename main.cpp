@@ -6,41 +6,14 @@
 //#include <random>
 //#include <chrono>
 //#include <iomanip>
-#include "Profileapi.h"
+
 #include "./shrubland_arduino/lib/dynarray/src/dynarray.h"
 #include "./shrubland_arduino/lib/shrub_learner/src/shrub_learner.h"
 #include "./shrubland_arduino/lib/testdata/src/testdata.h"
 //#include "shrub_learner.h"
 
-
-
 using namespace std;
 
-struct CPUtimer {    
-    CPUtimer():
-    elapsedTime(0.0), sumTime(0.0) {}
-
-    double elapsedTime;
-    double sumTime;
-    LARGE_INTEGER frequency;        // ticks per second
-    LARGE_INTEGER t1, t2;           // ticks
-
-    void setFreq();
-    void start();
-    void reset_sumTime();
-    double stop();
-    
-};
-
-void   CPUtimer::setFreq() {QueryPerformanceFrequency(&frequency);}
-void   CPUtimer::start()   {QueryPerformanceCounter(&t1);}
-void   CPUtimer::reset_sumTime() {sumTime=0;}
-double CPUtimer::stop()  {
-    QueryPerformanceCounter(&t2);
-    elapsedTime = (t2.QuadPart - t1.QuadPart) * 1000000.0 / frequency.QuadPart;
-    sumTime += elapsedTime;
-    return(elapsedTime);
-}    
 CPUtimer Timer;
 
 
@@ -81,10 +54,11 @@ int main() {
      //std::shared_ptr<dynamic_array<double,int>> sp3(new dynamic_array<double,int>(5,10), array_deleter<dynamic_array<double,int>>());
     //std::cout << "\n ncopy:" <<sp3.use_count();
     Timer.setFreq();
+    
     int startTime;
     int endTime;
     Timer.reset_sumTime();
-    while(n_trials<10) {
+    while(n_trials<25) {
         n_trials++;
         Timer.reset_sumTime();
         Timer.start();
@@ -100,8 +74,8 @@ int main() {
         sprint("  time is:"); sprint(float(Timer.elapsedTime/1000));
         sprint(" avg.:"); sprint(sum_time/n_trials/1000);
         sprint(" i_node:"); sprint(forlake.i_node);
-        sprint(" i_tree:"); sprintln(forlake.i_tree);
-    
+        sprint(" i_tree:"); sprint(forlake.i_tree);
+        sprint(" sort:"); sprintln(float(forlake.sortTimer.sumTime/1000));
         
     }
 }

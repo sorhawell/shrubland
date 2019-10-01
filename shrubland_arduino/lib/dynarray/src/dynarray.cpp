@@ -26,6 +26,9 @@
     double sq(double x) {return x * x;}
     float sq(float x) {return x * x;}
 
+    
+
+
 
     
 

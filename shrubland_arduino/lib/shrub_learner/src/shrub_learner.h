@@ -2,15 +2,27 @@
 
 #ifdef testpc
     #include "../../dynarray/src/dynarray.h"
+    #include "Profileapi.h"
+
+    struct CPUtimer {    
+        CPUtimer():
+        elapsedTime(0.0), sumTime(0.0) {}
+
+        double elapsedTime;
+        double sumTime;
+        LARGE_INTEGER frequency;        // ticks per second
+        LARGE_INTEGER t1, t2;           // ticks
+
+        void setFreq();
+        void start();
+        void reset_sumTime();
+        double stop();
+    };
 #else
     #include <dynarray.h>
 #endif
 
 #include <algorithm>
-
-//#include <iomanip
-
-
 
 struct node {
     node();
@@ -30,7 +42,6 @@ struct temp_node{
     uint16_t status;
     bool* innodep;
     node* nodep;
-
     float lchild_sum;
     float rchild_sum;
     uint16_t lchild_n;
@@ -41,8 +52,6 @@ struct temp_node{
 };
 
 class forest_lake {
-    
-   
 
     dynamic_array<float,uint16_t>* X = nullptr;
     dynamic_vector<float,uint16_t>* y = nullptr;
@@ -61,8 +70,9 @@ class forest_lake {
     uint16_t p_depth = 9;
     uint16_t p_minnode = 5;
     uint16_t p_ntree = 150;
-    uint16_t p_sampsize = 500;
+    uint16_t p_sampsize = 450;
 
+    CPUtimer sortTimer;
 
     forest_lake(node*,uint16_t);
     forest_lake(uint16_t);

@@ -8,6 +8,20 @@ void initialize() {
 }
 std::uniform_int_distribution<uint32_t> uint_dist;
 
+#ifdef testpc
+
+    void   CPUtimer::setFreq() {QueryPerformanceFrequency(&frequency);}
+    void   CPUtimer::start()   {QueryPerformanceCounter(&t1);}
+    void   CPUtimer::reset_sumTime() {sumTime=0;}
+    double CPUtimer::stop()  {
+        QueryPerformanceCounter(&t2);
+        elapsedTime = (t2.QuadPart - t1.QuadPart) * 1000000.0 / frequency.QuadPart;
+        sumTime += elapsedTime;
+        return(elapsedTime);
+    }    
+
+#endif
+
 
 //stack_node is tempoary node information placed on the stack
 //stack_node information is dropped when node goes out of scope of recursive algorithm
@@ -250,6 +264,8 @@ void forest_lake::bestsplit(temp_node* snode) {
 
 void forest_lake::grow(dynamic_array<float,uint16_t>* newX, dynamic_vector<float,uint16_t>* newy) {
     
+    
+
     X = newX;
     y = newy;
 
@@ -260,14 +276,7 @@ void forest_lake::grow(dynamic_array<float,uint16_t>* newX, dynamic_vector<float
     //uint16_t* idx = nullptr;
     float splitval = 0;
                     
-
-    //run time pars
-    const uint16_t p_depth = 7;
-    const uint16_t p_minnode = 5;
-    const uint16_t p_ntree = 1;
-    const uint16_t p_sampsize = 150;
-    
-    
+   
     //initialize allocate temporay data
     //make index of X, same dim as X
     dynamic_array<uint16_t,uint16_t> index_(X->get_size(),X->get_col());
@@ -470,7 +479,8 @@ void forest_lake::rec_grow(dynamic_array<float,uint16_t>* newX, dynamic_vector<f
     
         //run time pars
    
-    
+    sortTimer.setFreq();
+    sortTimer.reset_sumTime();
     
     X = newX;
     y = newy;
@@ -577,8 +587,16 @@ bool forest_lake::recsplit(
 
         i_Cp = Sp;
         const auto* x = X->get_col_p(i_var); //reference to column for this variable in matrix
+
+        #ifdef testpc
+        sortTimer.start();
+        #endif
+
         std::sort(Sp,Ep,[x](size_t i1, size_t i2) {return x[i1] < x [i2];}); //sort by x feature column
-    
+        
+        #ifdef testpc
+        sortTimer.stop();
+        #endif
         //set sums and counters before rolling mean square error crit
         n_r = p_minsplit;
         n_l = parent_n-p_minsplit;
@@ -635,7 +653,15 @@ bool forest_lake::recsplit(
     
     //resort by best split
     const auto* x = X->get_col_p(best_var); //reference to column for this variable in matrix
+      
+
+    #ifdef testpc
+        sortTimer.start();
+    #endif
     std::sort(Sp,Ep,[x](size_t i1, size_t i2) {return x[i1] < x [i2];}); //sort by x feature column
+    #ifdef testpc
+        sortTimer.stop();
+    #endif
     parent_node->splitval = (X->at(*(Cp-1),best_var) + X->at(*Cp,best_var))/2;
     
     parent_node->splitval = best_splitval;
