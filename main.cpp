@@ -96,12 +96,11 @@ int main() {
         print_error(y_test, y_pred);
         Timer.stop();    
         
-        sum_time += Timer.elapsedTime;
-        
-    sprint("  time is:"); sprint(float(Timer.elapsedTime/1000));
-    sprint(" avg.:"); sprint(sum_time/n_trials/1000);
-    sprint(" i_node:"); sprint(forlake.i_node);
-    sprint(" i_tree:"); sprintln(forlake.i_tree);
+        sum_time += Timer.elapsedTime;    
+        sprint("  time is:"); sprint(float(Timer.elapsedTime/1000));
+        sprint(" avg.:"); sprint(sum_time/n_trials/1000);
+        sprint(" i_node:"); sprint(forlake.i_node);
+        sprint(" i_tree:"); sprintln(forlake.i_tree);
     
         
     }

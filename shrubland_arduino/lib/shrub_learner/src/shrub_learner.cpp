@@ -94,14 +94,10 @@ float temp_node::mean_node() {
 //A learner can acuire new nodes and trees from here.
 //when pool is exhausted, the learner will gracefully complete its job.
 forest_lake::forest_lake(node* nds,uint16_t size) :
-    X(nullptr), y(nullptr), index(nullptr) ,
-    ownership(false), nodes(nds), n_nodes(size), i_node(0), n_nodes_i_tree(0), i_tree(0),
-    temp_node_sum_left(0),temp_node_sum_right(0) {};
+    ownership(false), nodes(nds), n_nodes(size) {};
 
 forest_lake::forest_lake(uint16_t size) :
-    X(nullptr), y(nullptr), index(nullptr) ,
-    ownership(true), nodes(nullptr), n_nodes(size), i_node(0), n_nodes_i_tree(0), i_tree(0),
-    temp_node_sum_left(0),temp_node_sum_right(0) {
+    ownership(true), n_nodes(size) {
     nodes = new node[n_nodes];
 };
 
@@ -473,10 +469,7 @@ void forest_lake::grow(dynamic_array<float,uint16_t>* newX, dynamic_vector<float
 void forest_lake::rec_grow(dynamic_array<float,uint16_t>* newX, dynamic_vector<float,uint16_t>* newy) {
     
         //run time pars
-    const uint16_t p_depth = 3;
-    const uint16_t p_minnode = 5;
-    const uint16_t p_ntree = 150;
-    const uint16_t p_sampsize = 200;
+   
     
     
     X = newX;
@@ -521,10 +514,10 @@ void forest_lake::grow_node(uint16_t* Sp, uint16_t* Ep, node* parent_node, uint1
     //sprint(depth);
     //either terminate this node and return...
     uint16_t* Cp{Sp+1};
-    int n_parent{Ep-Sp};
+    const int n_parent{Ep-Sp};
     
     if(
-         n_parent<=7 || depth>=9 || !two_more_nodes()  ||   //if this node should no be tried splitted
+         n_parent<=p_minnode || depth>=p_depth || !two_more_nodes()  ||   //if this node should no be tried splitted
         !recsplit(Sp,Ep,Cp,parent_node)                       //or if split failed... (may fail if all feature values are the same)
     ) {
         
@@ -635,8 +628,8 @@ bool forest_lake::recsplit(
 
     //parent_node->right_child_id = i_node;
     parent_node->bestvar = best_var;
-    //temp_node_sum_left = best_sum;
-    //temp_node_sum_right = parent_node->splitval - best_sum;
+    temp_node_sum_left = best_sum;
+    temp_node_sum_right = parent_node->splitval - best_sum;
     //sprint(" sv ");
     //sprint(int(Cp-Sp));
     

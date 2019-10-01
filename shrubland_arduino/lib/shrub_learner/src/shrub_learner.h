@@ -44,19 +44,24 @@ class forest_lake {
     
    
 
-    dynamic_array<float,uint16_t>* X;
-    dynamic_vector<float,uint16_t>* y;
-    dynamic_array<uint16_t,uint16_t>* index;  
+    dynamic_array<float,uint16_t>* X = nullptr;
+    dynamic_vector<float,uint16_t>* y = nullptr;
+    dynamic_array<uint16_t,uint16_t>* index = nullptr;  
     bool ownership;
     
     public:
-    node* nodes;
+    node* nodes = nullptr;
     uint16_t n_nodes;
-    uint16_t i_node;
-    uint16_t n_nodes_i_tree;
-    uint16_t i_tree;
-    float temp_node_sum_left;
-    float temp_node_sum_right;
+    uint16_t i_node = 0;
+    uint16_t n_nodes_i_tree = 0;
+    uint16_t i_tree = 0;
+    float temp_node_sum_left = 0.0;
+    float temp_node_sum_right = 0.0;
+
+    uint16_t p_depth = 9;
+    uint16_t p_minnode = 5;
+    uint16_t p_ntree = 150;
+    uint16_t p_sampsize = 500;
 
 
     forest_lake(node*,uint16_t);

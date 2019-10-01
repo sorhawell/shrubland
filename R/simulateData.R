@@ -12,24 +12,27 @@ train = makeXY();
 test  = makeXY();
 
 Time = system.time({
-  rf = randomForest(train$X,train$y,ntree=143,sampsize=200,mtry =5,replace = TRUE)
+  for(i_turns in 1:10) {
+  rf = randomForest(train$X,train$y,ntree=61,sampsize=450,mtry =5,replace = TRUE)
+  rf
+  
+  preds = predict(rf,test$X)
+  plot(test$y,preds)
+  cor(preds,test$y)^2
+  rf
+  
+  yt= train$y
+  sqrt(sum(
+    (test$y-mean(train$y))^2 / (length(yt)-1)
+  ))
+  print(sqrt(sum(
+    (test$y-preds)^2 / (length(yt)-1)
+  )))
+  }
+  
 })
-
+Time*10
 #diagnosttics
-rf
-Time
-preds = predict(rf,test$X)
-plot(test$y,preds)
-cor(preds,test$y)^2
-rf
-
-yt= train$y
-sqrt(sum(
-  (test$y-mean(train$y))^2 / (length(yt)-1)
-))
-sqrt(sum(
-  (test$y-preds)^2 / (length(yt)-1)
-))
 
 
 

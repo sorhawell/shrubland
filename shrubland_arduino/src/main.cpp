@@ -78,7 +78,5 @@ void loop(){
     //Serial.println(forlake.i_node);
 
     Serial.println("...");
-
-    delay(3000);
 }
 
