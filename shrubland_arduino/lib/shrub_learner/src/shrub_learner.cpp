@@ -286,7 +286,12 @@ void forest_lake::grow(dynamic_array<float,uint16_t>* newX, dynamic_vector<float
     }
 
     //make inbag/innode sampling
-    uint16_t innode_sz{p_depth*X->get_row()};
+    #ifdef testpc
+        uint16_t innode_sz= uint16_t(p_depth*X->get_row()); //safe explicit cast as n_obs is limited to uint16_t
+    #else
+        uint16_t innode_sz= uint16_t(p_depth*X->get_row()); //safe explicit cast as n_obs is limited uint16_t max
+    #endif
+
     //bool innode_buffer[innode_sz];
     dynamic_array <bool,uint16_t> innode(innode_sz,p_depth);
     dynamic_vector<bool,uint16_t> innode_v0 = innode.get_vector(0);
@@ -515,43 +520,52 @@ void forest_lake::grow_node(uint16_t* Sp, uint16_t* Ep, node* parent_node, uint1
     //sprint('\n');
     //sprint(depth);
     //either terminate this node and return...
-    if(Ep-Sp<=5 || depth>=7 || !two_more_nodes()) {
-        //sprint(" t");
-        //sprintln("terminal");
+    uint16_t* Cp{Sp+1};
+    int n_parent{Ep-Sp};
+    
+    if(
+         n_parent<=5 || depth>=7 || !two_more_nodes()  ||   //if this node should no be tried splitted
+        !recsplit(Sp,Ep,Cp,parent_node)                       //or if split failed... (may fail if all feature values are the same)
+    ) {
+        
         float predSum{0};
         uint16_t* i=Sp;
         while(i!=Ep) {
             predSum += y->at(*i);
             i++;
         }
-        parent_node->makeTerminal(predSum/(Ep-Sp),Ep-Sp); // "save to forest_lake_pointer"
+        parent_node->makeTerminal(predSum/(n_parent),n_parent); // "save to forest_lake_pointer"
         return;
     }
     //otherwise allocate new nodes, split and jump to child nodes
-    uint16_t* Cp{Sp+1};
-    recsplit(Sp,Ep,Cp,parent_node);
-   
-    node* right_node = new_node3(-42.0);
-    node* left_node  = new_node3(42.0);
+    
+    
+    parent_node->right_child_id = i_node;
+    node* right_node = new_node3(Cp-Sp);
+    node* left_node  = new_node3(Ep-Cp);
   
     grow_node(Sp,Cp,right_node,depth+1);
     grow_node(Cp,Ep,left_node ,depth+1);
    
 }
     
-void forest_lake::recsplit(
+bool forest_lake::recsplit(
     uint16_t* Sp, uint16_t* Ep, uint16_t*& Cp, node* parent_node
 ) {
-    
+    //sprint("\n new split:");sprintln(i_node);
+
     //internal variables
-    uint16_t parent_n{Ep-Sp};
+    uint16_t parent_n = uint16_t(Ep-Sp); //is safe as n_obs is limited
     float crit{-1}, critmax{-1.0}, prev_y{0}, sum_r{0}, sum_l{0}, best_sum{0}, best_splitval{0};
     uint16_t tieVal{0}, prev{0}, curr{0}, n_r{0}, n_l{0}, best_var{0};
     const uint16_t n_col{X->get_col()}; //dummy init
     uint16_t* i_Cp{nullptr};
     
     constexpr uint16_t p_minsplit=2;
-    if(p_minsplit>=parent_n) error("p_minsplit is set too high");
+    if(p_minsplit*2>=parent_n) {
+        sprint(parent_n);
+        error("p_minsplit is set too high");
+    }
 
     float* yp = y->begin();
 
@@ -585,37 +599,41 @@ void forest_lake::recsplit(
             sum_l  -= prev_y;
             ++i_Cp;
         }        
-        
+        curr = *i_Cp;
         //iterate all splits and compute rolling mean square error crit
-        for(;i_Cp!=Ep;i_Cp++) {
-            //update state
-            if(--n_l<=p_minsplit) break; //
+        while(i_Cp!=Ep) {
+
+            //skip if split on same obs
+            if(curr!=prev && x[curr]!=x[prev]) {
+                //compute loss/crit
+                crit = (sum_l * sum_l / n_l) + (sum_r * sum_r / n_r);// - crit_parent;
+
+                //if critmax save
+                if (crit >= critmax) {  //handle better crit, accept new split
+                    if (crit!=critmax) tieVal=0;
+                    if (crit!=critmax || uint_dist(rng) > UINT32_MAX / ++tieVal) { //update
+                        Cp  = i_Cp;
+                        best_var = i_var;
+                        best_sum = sum_l;
+                        best_splitval = (x[curr]+x[prev])/2;
+                        //sprint("bs");sprint(best_splitval);sprint(" v ");sprint(i_var);sprint(" c ");sprintln(crit);
+                    }
+                    critmax = crit;
+                }            
+            }
+            //move the lowest feature value obs from left node to right node, and update counts and sums
+            if(--n_l<p_minsplit) break; //
             n_r++;
             prev = curr;
-            curr = *i_Cp;
+            ++i_Cp;
+            curr = *(i_Cp);
             prev_y = yp[prev];
             sum_r += prev_y;
             sum_l -= prev_y;
-            if(curr==prev && x[curr]==x[prev]) continue; //same value skip crit
-            
-            //compute loss/crit
-            crit = (sum_l * sum_l / n_l) + (sum_r * sum_r / n_r);// - crit_parent;
-
-            //if critmax save
-            if (crit >= critmax) {  //handle better crit, accept new split
-                if (crit!=critmax) tieVal=0;
-                if (crit!=critmax || uint_dist(rng) > UINT32_MAX / ++tieVal) { //update
-                    Cp  = i_Cp;
-                    best_var = i_var;
-                    best_sum = sum_l;
-                    best_splitval = (x[curr]+x[prev])/2;
-                }
-                critmax = crit;
-            }            
         }
     }
 
-    parent_node->right_child_id = i_node;
+    //parent_node->right_child_id = i_node;
     parent_node->bestvar = best_var;
     //temp_node_sum_left = best_sum;
     //temp_node_sum_right = parent_node->splitval - best_sum;
@@ -625,9 +643,16 @@ void forest_lake::recsplit(
     //resort by best split
     const auto* x = X->get_col_p(best_var); //reference to column for this variable in matrix
     std::sort(Sp,Ep,[x](size_t i1, size_t i2) {return x[i1] < x [i2];}); //sort by x feature column
-    //parent_node->splitval = (X->at(*(Cp-1),best_var) + X->at(*Cp,best_var))/2;
+    parent_node->splitval = (X->at(*(Cp-1),best_var) + X->at(*Cp,best_var))/2;
+    if(parent_node->splitval!=best_splitval) {
+        sprintln("compare splits");
+        sprintln(parent_node->splitval);
+        sprintln(best_splitval);
+        sprintln(Cp==Sp+1);
+        //error("not same value");
+    }
     parent_node->splitval = best_splitval;
-
+    
     //if split success Cp will not point as Sp
     return Cp!=Sp+1;
 }
@@ -660,8 +685,6 @@ float forest_lake::predict(dynamic_array<float,uint16_t>* X,uint16_t i_row){
                       k_node++;
                     }
 
-                    
-                //sprint("[");sprint(k_node);sprint("]");
                 } else {
                     
                     //this node is terminal

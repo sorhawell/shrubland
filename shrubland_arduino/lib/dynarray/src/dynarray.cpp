@@ -21,6 +21,13 @@
     void error(const char* e) {throw std::runtime_error(e);}
 
     
+    //mimic arduino sq function
+
+    double sq(double x) {return x * x;}
+    float sq(float x) {return x * x;}
+
+
+    
 
 #else
     #include <Arduino.h>

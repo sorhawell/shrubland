@@ -1,16 +1,21 @@
 #pragma once
 #ifdef testpc
     #include <iostream>
+    double sq(double x);
+    float sq(float x);
+    
 #else
     #include <Arduino.h>
 #endif
 void sprint(int x);
 void sprint(uint16_t x);
 void sprint(float x);
+void sprint(float x, uint16_t n);
 void sprint(const char x[]);
 void sprintln(int x);
 void sprintln(uint16_t x);
 void sprintln(float x);
+void sprintln(float x,uint16_t n);
 void sprintln(const char x[]);
 void sprintln();
 

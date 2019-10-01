@@ -8,7 +8,7 @@
 //#include <iomanip>
 #include "Profileapi.h"
 #include "./shrubland_arduino/lib/dynarray/src/dynarray.h"
-//#include "./shrubland_arduino/lib/shrub_learner/src/shrub_learner.h"
+#include "./shrubland_arduino/lib/shrub_learner/src/shrub_learner.h"
 #include "./shrubland_arduino/lib/testdata/src/testdata.h"
 //#include "shrub_learner.h"
 
@@ -53,7 +53,7 @@ constexpr int ycol =5;
 
 
 
-//forest_lake forlake(uint16_t(12000));
+forest_lake forlake(uint16_t(12000));
 uint16_t n_train=500;
 float* Dp_train = DData;
 float* Dp_test = DData_test;
@@ -63,47 +63,74 @@ dynamic_array<float,uint16_t> X_test(Dp_test, n_train*ncol,ncol);
 dynamic_vector<float,uint16_t> y = X.get_vector(ycol); //
 dynamic_vector<float,uint16_t> y_test = X_test.get_vector(ycol); //
     
-
+int sum_time{0};
+float sum_error{0};
+int n_trials{0};
+constexpr int nval = nrow*ncol;
 int main() {
+
+    
     sprintln(42);
     X.print();
     X.truncate_col(); //revoke X's read/write access this last column
     X_test.truncate_col(); //revoke X's read/write access this last column
 
     
-    /* //std::shared_ptr<dynamic_array<double,int>> sp3(new dynamic_array<double,int>(5,10), array_deleter<dynamic_array<double,int>>());
+     //std::shared_ptr<dynamic_array<double,int>> sp3(new dynamic_array<double,int>(5,10), array_deleter<dynamic_array<double,int>>());
     //std::cout << "\n ncopy:" <<sp3.use_count();
     Timer.setFreq();
+    int startTime;
+    int endTime;
+   
+    while(n_trials==0) {
+        n_trials++;
+        Timer.reset_sumTime();
+        Timer.start();
+        forlake.truncate();
+        forlake.rec_grow(&X,&y);
 
+
+        //forlake.print_nlines(80);
+
+        
+
+        double mean =0;
+        for(int i=0; i<n_train;i++) {mean += y.at(i);}
+        mean /= n_train;
+        
+        double sqerr  = 0;
+        double sqerr2 = 0;
+        float pred=0;
+        float yval=0;
+        for(int i=0; i<n_train; i++) {
+            pred = forlake.predict(&X_test,i);
+            yval = y_test.at(i);
+            sqerr += sq(yval - pred);
+            sqerr2+= sq(yval - mean);
+
+/*             sprint(yval);sprint(" ,");sprint(pred);
+            sprint(" ,");sprint  (X_test.at(i,0));
+            sprint(" ,");sprintln(X_test.at(i,1)); 
+ */            
+        }
+        Timer.stop();        
+        float SD = sqrt(sqerr /(n_train-1));
+        float SD2= sqrt(sqerr2/(n_train-1));
+        sprint("model error is: "); sprint(SD );
+        sum_error += SD;
+        sprint(" avg.:"); sprint(float(sum_error/n_trials),4);
+        sprint("  total error is: "); sprint(SD2);
+
+        cout << "\n time used is: " << Timer.sumTime/1000;
+    }
+}
 
     //allocate data buffer on stack at run-time (heap and static is possible too)
-    int nval = nrow*ncol;
+    
     //double data_buffer[nval];
     //placing buffer in same scope as any abstrations using it best practice
     //as they will be desctructed simultanously
-    forest_lake forlake(25000);
-
-    //allocate array abstraction on stack or heap
-    dynamic_array<double,int> X2(1,1); //tiny array
-    {
-
-        dynamic_array<double,int> X(nval,ncol);
-        X.fillCSV("./data/test1.csv"); //fill X with values from csv as doubles
-        X.print();
-
-        //let a target vector y point to last column in buffer
-        dynamic_vector<double,int> y = X.get_vector(ycol); //
-        X.truncate_col(); //revoke X's read/write access this last column
-        X.print();
-        forlake.grow(&X,&y);
-        //X2 = X; // not public accessible use instead .assign method instead
-        X.assign(X2); //copy to X2 and give away ownership for heap mem to X2
-        X2.assign(X);
-        X.assign(X2);
-        //X is deleted, X2 survives and has ownership to data */
-    };  
     
-
     
     /* std::cout << std::fixed;
     std::cout << std::setprecision(3);

@@ -80,7 +80,7 @@ class forest_lake {
     void grow(dynamic_array<float,uint16_t>* newX, dynamic_vector<float,uint16_t>* newy);
     void rec_grow(dynamic_array<float,uint16_t>* newX, dynamic_vector<float,uint16_t>* newy);
     void grow_node(uint16_t* Sp, uint16_t* Ep, node* parent_node, uint16_t depth);
-    void recsplit(uint16_t* Sp, uint16_t* Ep, uint16_t*& Cp, node* parent_node);
+    bool recsplit(uint16_t* Sp, uint16_t* Ep, uint16_t*& Cp, node* parent_node);
     float predict(dynamic_array<float,uint16_t>* X,uint16_t i_row);
 };
 
