@@ -479,8 +479,10 @@ void forest_lake::rec_grow(dynamic_array<float,uint16_t>* newX, dynamic_vector<f
     
         //run time pars
    
+    #ifdef testpc
     sortTimer.setFreq();
     sortTimer.reset_sumTime();
+    #endif
     
     X = newX;
     y = newy;

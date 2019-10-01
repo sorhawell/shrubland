@@ -72,7 +72,9 @@ class forest_lake {
     uint16_t p_ntree = 150;
     uint16_t p_sampsize = 450;
 
-    CPUtimer sortTimer;
+    #ifdef testpc
+        CPUtimer sortTimer;
+    #endif
 
     forest_lake(node*,uint16_t);
     forest_lake(uint16_t);
