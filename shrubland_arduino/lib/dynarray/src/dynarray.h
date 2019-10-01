@@ -31,9 +31,9 @@ template <class T, class S>
 class dynamic_vector {
     T* dyn_vec;
     T* j;
-
-    public:
     S sz;
+    public:
+    
     dynamic_vector(T* begin, S size);
     T at(S i);
     T get(S i);
@@ -41,9 +41,11 @@ class dynamic_vector {
     T next();
     T* begin();
     T* end();
+    S get_size();
 
     void print();
 };
+
 
 template <class T, class S>
 class dynamic_array{
@@ -91,3 +93,5 @@ class dynamic_array{
 
 template<class T>
 T Abs(T);
+
+void print_error( dynamic_vector<float,uint16_t>& y_true, dynamic_vector<float,uint16_t>& y_pred);

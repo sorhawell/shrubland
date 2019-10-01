@@ -476,7 +476,7 @@ void forest_lake::rec_grow(dynamic_array<float,uint16_t>* newX, dynamic_vector<f
     const uint16_t p_depth = 3;
     const uint16_t p_minnode = 5;
     const uint16_t p_ntree = 150;
-    const uint16_t p_sampsize = 500;
+    const uint16_t p_sampsize = 200;
     
     
     X = newX;
@@ -524,7 +524,7 @@ void forest_lake::grow_node(uint16_t* Sp, uint16_t* Ep, node* parent_node, uint1
     int n_parent{Ep-Sp};
     
     if(
-         n_parent<=5 || depth>=7 || !two_more_nodes()  ||   //if this node should no be tried splitted
+         n_parent<=7 || depth>=9 || !two_more_nodes()  ||   //if this node should no be tried splitted
         !recsplit(Sp,Ep,Cp,parent_node)                       //or if split failed... (may fail if all feature values are the same)
     ) {
         
@@ -574,7 +574,7 @@ bool forest_lake::recsplit(
         //sprint(" ps");
         uint16_t* i=Sp;
         while(i!=Ep) {
-            predSum += y->at(*i);
+            predSum += yp[*i];
             i++;
         }
     }
@@ -644,13 +644,7 @@ bool forest_lake::recsplit(
     const auto* x = X->get_col_p(best_var); //reference to column for this variable in matrix
     std::sort(Sp,Ep,[x](size_t i1, size_t i2) {return x[i1] < x [i2];}); //sort by x feature column
     parent_node->splitval = (X->at(*(Cp-1),best_var) + X->at(*Cp,best_var))/2;
-    if(parent_node->splitval!=best_splitval) {
-        sprintln("compare splits");
-        sprintln(parent_node->splitval);
-        sprintln(best_splitval);
-        sprintln(Cp==Sp+1);
-        //error("not same value");
-    }
+    
     parent_node->splitval = best_splitval;
     
     //if split success Cp will not point as Sp
@@ -698,4 +692,13 @@ float forest_lake::predict(dynamic_array<float,uint16_t>* X,uint16_t i_row){
     }
 
     return(prediction/j_tree);
+}
+
+ void forest_lake::predict_all(dynamic_array<float,uint16_t>* X,dynamic_array<float,uint16_t>* out,uint16_t i_col){
+    if(out->get_row()!=X->get_row()) error("out and X must have same row size");
+    if(out->get_col()<=i_col) error("i_col exceeds out number of columns");
+    const uint16_t n_obs = uint16_t(X->get_row());
+    dynamic_vector<float,uint16_t> vec = out->get_vector(i_col);
+    uint16_t j=0;
+    for(auto& i : vec) i = forest_lake::predict(X,j++);
 }

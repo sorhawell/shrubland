@@ -82,5 +82,6 @@ class forest_lake {
     void grow_node(uint16_t* Sp, uint16_t* Ep, node* parent_node, uint16_t depth);
     bool recsplit(uint16_t* Sp, uint16_t* Ep, uint16_t*& Cp, node* parent_node);
     float predict(dynamic_array<float,uint16_t>* X,uint16_t i_row);
+    void predict_all(dynamic_array<float,uint16_t>* X,dynamic_array<float,uint16_t>* out,uint16_t i_col);
 };
 

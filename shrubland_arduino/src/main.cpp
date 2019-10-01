@@ -24,6 +24,8 @@ dynamic_array<float,uint16_t> X(Dp_train    , n_train*ncol,ncol);
 dynamic_array<float,uint16_t> X_test(Dp_test, n_train*ncol,ncol);
 dynamic_vector<float,uint16_t> y = X.get_vector(ycol); //
 dynamic_vector<float,uint16_t> y_test = X_test.get_vector(ycol); //
+dynamic_array<float,uint16_t> y_pred_arr(n_train,1);
+dynamic_vector<float,uint16_t> y_pred = y_pred_arr.get_vector(0);
     
 
 //#define sprintf(b) (Serial.printf(b));
@@ -57,43 +59,12 @@ void loop(){
     startTime = millis();
     forlake.truncate();
     forlake.rec_grow(&X,&y);
-    endTime = millis();
-    //Serial.println(endTime-startTime);
-    
-    forlake.print_nlines(500);
 
-    
     //forlake.print_nlines(130);
-    //delay(5000);
 
-    //forlake.print_splits(5000);
-    //delay(5000);
-
-    double mean =0;
-    for(int i=0; i<n_train;i++) {mean += y.at(i);}
-    mean /= n_train;
     
-    double sqerr  = 0;
-    double sqerr2 = 0;
-    float pred=0;
-    float yval=0;
-    for(int i=0; i<n_train; i++) {
-        pred = forlake.predict(&X_test,i);
-        yval = y_test.at(i);
-        sqerr += sq(yval - pred);
-        sqerr2+= sq(yval - mean);
-
-        Serial.print(yval);Serial.print(" ,");Serial.print(pred);
-        Serial.print(" ,");Serial.print  (X_test.at(i,0));
-        Serial.print(" ,");Serial.println(X_test.at(i,1)); 
-    }
-    
-    double SD = sqrt(sqerr /(n_train-1));
-    double SD2= sqrt(sqerr2/(n_train-1));
-    Serial.print("model error is: "); Serial.print(SD );
-    sum_error += SD;
-    Serial.print(" avg.:"); Serial.print(sum_error/n_trials,4);
-    Serial.print("  total error is: "); Serial.print(SD2);
+    forlake.predict_all(&X_test,&y_pred_arr,0);
+    print_error(y_test, y_pred);
     endTime = millis();
 
     //forlake.print_nlines(15);    

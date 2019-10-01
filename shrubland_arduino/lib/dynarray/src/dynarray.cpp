@@ -127,6 +127,11 @@ T* dynamic_vector<T,S>::end() {
 }
 
 template <class T, class S>
+S dynamic_vector<T,S>::get_size() {
+    return(sz);
+}
+
+template <class T, class S>
 dynamic_array<T,S>::dynamic_array(T* begin, S size, S ncol):
     dyn_array(begin), ownership(false), n_row(size/ncol), n_col(ncol),
     sz(size), j_col(0), j_row(0), j(begin) {};
@@ -318,9 +323,39 @@ T Abs(T x) {
         return -x;
     }
 };
-
 template float Abs(float);
 template double Abs(double);
+
+
+void print_error( dynamic_vector<float,uint16_t>& y_true, dynamic_vector<float,uint16_t>& y_pred) {
+    
+    uint16_t n =y_true.get_size();
+    double mean{0};
+    for(const auto& i : y_true) {mean += i;}
+    mean /= n;
+    
+
+    double sqerr  = 0;
+    double sqerr2 = 0;
+    float pred=0;
+    float yval=0;
+    
+
+    for(int i=0; i<n; i++) {
+        pred = y_true.at(i);
+        yval = y_pred.at(i);
+        sqerr += sq(yval - pred);
+        sqerr2+= sq(yval - mean);
+    }
+
+    float SD = sqrt(sqerr /(n-1));
+    float SD2= sqrt(sqerr2/(n-1));
+    sprint("model error is: "); sprint(SD );
+    //sum_error += SD;
+    //Serial.print(" avg.:"); Serial.print(sum_error/n,4);
+    sprint("  total error is: "); sprint(SD2);
+
+}
 
 
 /* 

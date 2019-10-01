@@ -12,7 +12,7 @@ train = makeXY();
 test  = makeXY();
 
 Time = system.time({
-  rf = randomForest(train$X,train$y,ntree=500,sampsize=350,mtry =5,replace = FALSE)
+  rf = randomForest(train$X,train$y,ntree=143,sampsize=200,mtry =5,replace = TRUE)
 })
 
 #diagnosttics
