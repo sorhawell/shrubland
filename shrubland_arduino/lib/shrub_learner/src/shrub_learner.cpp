@@ -514,6 +514,7 @@ void forest_lake::rec_grow(dynamic_array<float,uint16_t>* newX, dynamic_vector<f
     #endif
     
     X = newX;
+    const uint16_t X_rowsize = X->get_row();
     y = newy;
     
     //allocate on heap, p_sampsize;
