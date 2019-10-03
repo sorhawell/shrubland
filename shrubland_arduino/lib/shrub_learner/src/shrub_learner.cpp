@@ -529,7 +529,7 @@ void forest_lake::rec_grow(dynamic_array<float,uint16_t>* newX, dynamic_vector<f
         //draw random sample with replacement into seg(ment) and compute target sum of nodes
         temp_node_sum_left=0;
         for(auto& i : vec) {
-            i = uint_dist(rng) % p_sampsize;
+            i = uint_dist(rng) % X_rowsize;
             temp_node_sum_left += y->at(i);
         }
         //sprint("inode489 ");sprintln(i_node);
