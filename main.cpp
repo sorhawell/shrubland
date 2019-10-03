@@ -63,6 +63,8 @@ int main() {
     sprint(" sort:"); sprintln(float(Timer.sumTime/1000));
     radVec.print(); */
 
+    Timer.setFreq();
+    Timer.reset_sumTime();
     
     sprintln(42);
     X.print();
