@@ -58,7 +58,7 @@ void loop(){
     int endTime;
     startTime = millis();
     forlake.truncate();
-    forlake.rec_grow(&X,&y);
+    forlake.grow(&X,&y);
 
     //forlake.print_nlines(130);
 

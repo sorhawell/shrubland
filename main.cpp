@@ -48,8 +48,7 @@ int main() {
     
 
     //radix test
-    /* Timer.setFreq();
-    Timer.reset_sumTime();
+    /* 
     iota(radVec.begin(),radVec.end(),0);
     radVec.print();
     for(int i=0;i<10;i++){
@@ -83,13 +82,13 @@ int main() {
     sprintln(forlake.index_fixed.at(1,1));
     //forlake.index_fixed.print();
 
-    while(n_trials<25) {
+    while(n_trials<100) {
         n_trials++;
         Timer.reset_sumTime();
         Timer.start();
         
         forlake.truncate();
-        forlake.rec_grow(&X,&y);
+        forlake.grow(&X,&y);
         
 
         forlake.predict_all(&X_test,&y_pred_arr,0);

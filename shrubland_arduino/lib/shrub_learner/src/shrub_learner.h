@@ -69,10 +69,11 @@ class forest_lake {
     float temp_node_sum_left = 0.0;
     float temp_node_sum_right = 0.0;
 
-    uint16_t p_depth = 9;
+    uint16_t p_depth = 15;
     uint16_t p_minnode = 5;
-    uint16_t p_ntree = 150;
-    uint16_t p_sampsize = 450;
+    uint16_t p_ntree = 500;
+    uint16_t p_sampsize = 400;
+    uint16_t p_minimal_index = 45;
 
     #ifdef testpc
         CPUtimer sortTimer;

@@ -172,9 +172,7 @@ template <class T, class S>
 dynamic_array<T,S>::dynamic_array(const dynamic_array<T,S>& t)
     : dyn_array(t.dyn_array), ownership(t.ownership), n_row(t.n_row),
     n_col(t.n_col), sz(t.sz), j_col(t.j_col), j_row(t.j_row), j(t.j) {
-    
     if(!t.ownership) error("dyn_arr without ownership cannot copy");
-    
 }
 
 template <class T, class S>

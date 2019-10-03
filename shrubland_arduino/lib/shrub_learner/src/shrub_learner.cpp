@@ -220,12 +220,24 @@ void forest_lake::bestsplit(temp_node* snode) {
         n_r = p_minsplit;
         n_l = snode->n - p_minsplit ;
         
+        
+
         //check all splits
         for(; i_idx<n_obs; i_idx++) {
+
+        #ifdef testpcnot
+            sortTimer.start();
+        #endif
+
             curr = i_var_indexed[i_idx];
             if(!innodep[curr]) continue;  //check if indexed obs is innode
-            
+        
+        #ifdef testpcnot
+            sortTimer.stop();
+        #endif
+
             //if(n_r>2 || crit==-1) {
+                
                 crit = (sum_l * sum_l / n_l) + (sum_r * sum_r / n_r);// - crit_parent;
                 if (crit >= critmax && x[curr]!=x[prev]) {  //handle better crit, accept new split
                     if (crit!=critmax) tieVal=0;
@@ -239,8 +251,6 @@ void forest_lake::bestsplit(temp_node* snode) {
                     }
                     critmax = crit;
                 }
-            //}
-            //update indexes etc.
             prev = curr;
             curr_y = yp[curr];
             sum_r += curr_y;
@@ -268,8 +278,14 @@ void forest_lake::bestsplit(temp_node* snode) {
 void forest_lake::grow(dynamic_array<float,uint16_t>* newX, dynamic_vector<float,uint16_t>* newy) {
     
     
+    #ifdef testpc
+        sortTimer.setFreq();
+        sortTimer.reset_sumTime();
+    #endif
+    
 
     X = newX;
+    uint16_t X_rowsize = X->get_row();
     y = newy;
 
     //short-hands
@@ -280,6 +296,9 @@ void forest_lake::grow(dynamic_array<float,uint16_t>* newX, dynamic_vector<float
     float splitval = 0;
                     
    
+    dynamic_array<uint16_t,uint16_t> SEG(p_minimal_index,1);
+    dynamic_vector<uint16_t,uint16_t> seg = SEG.get_vector(0);
+
     //initialize allocate temporay data
     //make index of X, same dim as X
     dynamic_array<uint16_t,uint16_t> index_(X->get_size(),X->get_col());
@@ -295,12 +314,11 @@ void forest_lake::grow(dynamic_array<float,uint16_t>* newX, dynamic_vector<float
 
     //make inbag/innode sampling
     #ifdef testpc
-        uint16_t innode_sz= uint16_t(p_depth*X->get_row()); //safe explicit cast as n_obs is limited to uint16_t
+        const uint16_t innode_sz= uint16_t(p_depth*X->get_row()); //safe explicit cast as n_obs is limited to uint16_t
     #else
-        uint16_t innode_sz= uint16_t(p_depth*X->get_row()); //safe explicit cast as n_obs is limited uint16_t max
+        const uint16_t innode_sz= uint16_t(p_depth*X->get_row()); //safe explicit cast as n_obs is limited uint16_t max
     #endif
 
-    //bool innode_buffer[innode_sz];
     dynamic_array <bool,uint16_t> innode(innode_sz,p_depth);
     dynamic_vector<bool,uint16_t> innode_v0 = innode.get_vector(0);
     bool* innode_p0 = innode.get_col_p(0);
@@ -314,7 +332,7 @@ void forest_lake::grow(dynamic_array<float,uint16_t>* newX, dynamic_vector<float
     int16_t i_depth=0;     
     
     // for debugging
-    //int16_t x____test_n=0;
+    int16_t x____test_n=0;
     //float   x____test_sum=0;
     //-----
 
@@ -358,7 +376,13 @@ void forest_lake::grow(dynamic_array<float,uint16_t>* newX, dynamic_vector<float
                 } else {
                     
                     //start splitting
+                    #ifdef testpc
+                    sortTimer.start();
+                    #endif
                     bestsplit(&tnode[i_depth]); //find best split
+                    #ifdef testpc
+                    sortTimer.stop();
+                    #endif
 
                     //allocate right child node, no temp_node for now
                     tnode[i_depth].nodep->right_child_id = i_node; //place right child id in this parent node
@@ -405,6 +429,23 @@ void forest_lake::grow(dynamic_array<float,uint16_t>* newX, dynamic_vector<float
                      //go to left child
                     tnode[i_depth+1].status=0; //reset child status(n_visits) to zero
                     i_depth++;
+
+                                        if(tnode[i_depth].n<p_minimal_index) {                        
+                        //convert bool index to int index
+                        uint16_t j = 0;
+                        uint16_t* p_seg = seg.begin();
+                        while(j < X_rowsize){
+                            if(in_child[j]) {
+                                if(p_seg==seg.end()) error("oups this shouldnt happen 489");
+                                *p_seg = j;
+                                p_seg++;
+                            }
+                            j++;
+                        }
+                        grow_node(seg.begin(),p_seg,tnode[i_depth].nodep,uint16_t(i_depth));
+                        i_depth--;
+                    }
+
                     continue;
                 }
 
@@ -423,21 +464,21 @@ void forest_lake::grow(dynamic_array<float,uint16_t>* newX, dynamic_vector<float
                     x = X->get_col_p(tnode[i_depth].nodep->bestvar);
                     //idx = index->get_col_p(tnode[i_depth].nodep->bestvar);
                     splitval = tnode[i_depth].nodep->splitval;
-                    //x____test_n=0; //debug only
+                    x____test_n=0; //debug only
                     for(uint16_t i=0; i<X->get_row(); i++) {
                         in_child[i] = in_parent[i] && x[i] < splitval; //random tie handling also here?
-                       // if(in_child[i]) x____test_n++; //debug only
+                       if(in_child[i]) x____test_n++; //debug only
                     }
                     
                     //debug
-                    /* if(x____test_n != tnode[i_depth].rchild_n) {
+                    if(x____test_n != tnode[i_depth].rchild_n) {
                         sprint(" lsought:");sprint(tnode[i_depth].lchild_n);
                         sprint(" rsought:");sprint(tnode[i_depth].rchild_n);
                         sprint(" rfound: ");sprintln(x____test_n);
                         error("wrong right n");
-                     }
+                    }
 
-                    
+                    /*
                     temp_node tmp_r = tnode[i_depth+1];
 
                     sprint("children mean:");
@@ -446,9 +487,33 @@ void forest_lake::grow(dynamic_array<float,uint16_t>* newX, dynamic_vector<float
                     sprintln(tnode[i_depth].mean_node()); */
                     
                     //go to right child
+                    
+
                     tnode[i_depth+1].status=0;
                     i_depth++;
+
+                    
+                 //use recursive if less than minimal index
+                    if(tnode[i_depth].n<p_minimal_index) {                        
+                        //convert bool index to int index
+                        uint16_t j = 0;
+                        uint16_t* p_seg = seg.begin();
+                        while(j < X_rowsize){
+                            if(in_child[j]) {
+                                if(p_seg==seg.end()) error("oups this shouldnt happen 489");
+                                *p_seg = j;
+                                p_seg++;
+                            }
+                            j++;
+                        }
+                        grow_node(seg.begin(),p_seg,tnode[i_depth].nodep,uint16_t(i_depth));
+                        i_depth--;
+                    }
+
                     continue;
+
+                    
+
                 } else {
                     if(tnode[i_depth].status == 3) {
                         //comming back from right - go up
@@ -575,7 +640,7 @@ void forest_lake::grow_node(uint16_t* Sp,uint16_t* Ep, node* parent_node, uint16
     node* right_node = new_node3(Cp-Sp);
     node* left_node  = new_node3(Ep-Cp);
   
-    grow_node(Sp,Cp,right_node,depth+1);
+    grow_node(Sp,Cp,right_node  ,depth+1);
     grow_node(Cp,Ep,left_node ,depth+1);
    
 }
