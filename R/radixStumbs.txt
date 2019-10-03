@@ -54,3 +54,20 @@ RadixSort(radTest.get_col_p(0),50);
 radVec.print();
 
 error("stop here");
+
+
+
+      //use recursive if less than minimal index
+                    if(false &&tnode[i_depth].n<p_minimal_index && i_depth>=p_depth-2) {
+                        
+                        //convert bool index to int index
+                        uint16_t j = 0;
+                        for(auto& i : seg) {
+                            while(!in_parent[j]) {j++;}
+                            i = j;
+                        }
+
+                        grow_node(seg.begin(),seg.end(),tnode[i_depth].nodep,uint16_t(i_depth));
+                        
+                        i_depth--;
+                    }
