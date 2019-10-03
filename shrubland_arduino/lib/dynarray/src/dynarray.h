@@ -49,19 +49,21 @@ class dynamic_vector {
 
 template <class T, class S>
 class dynamic_array{
-    
-    T* dyn_array;
     bool ownership;
+    T* dyn_array;
     S n_row;
     S n_col;
     S sz;
+    T* j;
+    
+    public:
+    
     S j_col;
     S j_row;
-    T* j;
     dynamic_array(const dynamic_array<T,S>&);
     dynamic_array<T,S>& operator = (const dynamic_array<T,S> &other);
 
-    public:
+    dynamic_array();
     dynamic_array(T* begin, S size, S ncol);
     dynamic_array( S size, S ncol);
     ~dynamic_array();
@@ -69,6 +71,7 @@ class dynamic_array{
     dynamic_array<T,S> copy_weak();
     void assign(dynamic_array<T,S>&);
     void assign_weak(dynamic_array<T,S>&);
+    void release_ownership();
     //dynamic_array<T,S> dynamic_array<T,S> clone();
 
     T at(S i_row,S i_col);

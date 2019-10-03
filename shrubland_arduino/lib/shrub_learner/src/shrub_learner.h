@@ -56,9 +56,11 @@ class forest_lake {
     dynamic_array<float,uint16_t>* X = nullptr;
     dynamic_vector<float,uint16_t>* y = nullptr;
     dynamic_array<uint16_t,uint16_t>* index = nullptr;  
+    
     bool ownership;
     
     public:
+    dynamic_array<uint16_t,uint16_t> index_fixed;
     node* nodes = nullptr;
     uint16_t n_nodes;
     uint16_t i_node = 0;
@@ -75,7 +77,7 @@ class forest_lake {
     #ifdef testpc
         CPUtimer sortTimer;
     #endif
-
+    forest_lake();
     forest_lake(node*,uint16_t);
     forest_lake(uint16_t);
     ~forest_lake();
@@ -92,7 +94,8 @@ class forest_lake {
     void truncate();
     void print_nlines(uint16_t);
     void print_splits(uint16_t);
-    
+    bool pre_index_features(dynamic_array<float,uint16_t>* newX);
+
     void bestsplit(temp_node*);
     void grow(dynamic_array<float,uint16_t>* newX, dynamic_vector<float,uint16_t>* newy);
     void rec_grow(dynamic_array<float,uint16_t>* newX, dynamic_vector<float,uint16_t>* newy);
@@ -102,3 +105,7 @@ class forest_lake {
     void predict_all(dynamic_array<float,uint16_t>* X,dynamic_array<float,uint16_t>* out,uint16_t i_col);
 };
 
+
+
+uint16_t* RadixSort(uint16_t * a, size_t count);
+void my_shuff(uint16_t* begin, uint16_t* end);

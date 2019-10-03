@@ -107,6 +107,9 @@ float temp_node::mean_node() {
 //the forest pool, is memory pool for trees and nodes.
 //A learner can acuire new nodes and trees from here.
 //when pool is exhausted, the learner will gracefully complete its job.
+forest_lake::forest_lake() :
+    ownership(false), nodes(nullptr), n_nodes(0) {};
+
 forest_lake::forest_lake(node* nds,uint16_t size) :
     ownership(false), nodes(nds), n_nodes(size) {};
 
@@ -473,6 +476,32 @@ void forest_lake::grow(dynamic_array<float,uint16_t>* newX, dynamic_vector<float
 
 }
 
+bool forest_lake::pre_index_features(dynamic_array<float,uint16_t>* newX){
+    X =newX;
+    sprintln("\nhello world");
+    dynamic_array<uint16_t,uint16_t> index_(X->get_size(),X->get_col()); //allocated on heap
+    {
+    sprint("a");
+    this->index_fixed = index_;//shallow copy and transfer heap-ownership to forest_lake.index_fixed
+    index_.release_ownership();
+    index_.j_col = 42;
+    this->index_fixed.j_col=155;
+    sprint("a");
+    
+    for(uint16_t i=0 ; i<X->get_col(); i++) {
+        dynamic_vector<uint16_t,uint16_t> idx_vec = index_.get_vector(i);
+        float* x_vec = X->get_col_p(i);
+        std::iota(idx_vec.begin(),idx_vec.end(),0);
+        std::sort(idx_vec.begin(),idx_vec.end(),
+            [x_vec](size_t i1, size_t i2) {return x_vec[i1] < x_vec [i2];}
+        );
+    }
+    
+    X = nullptr;
+    }
+    sprint("b");
+    return true;
+}
 
 
 void forest_lake::rec_grow(dynamic_array<float,uint16_t>* newX, dynamic_vector<float,uint16_t>* newy) {
@@ -519,14 +548,10 @@ void forest_lake::rec_grow(dynamic_array<float,uint16_t>* newX, dynamic_vector<f
     }
 }
 
-void forest_lake::grow_node(uint16_t* Sp, uint16_t* Ep, node* parent_node, uint16_t depth) {
-    //sprint("\n entering node: ");sprintln(int(parent_node-nodes));
-    //sprint("\n i_node: ");sprintln(i_node);
-    //sprint('\n');
-    //sprint(depth);
-    //either terminate this node and return...
+void forest_lake::grow_node(uint16_t* Sp,uint16_t* Ep, node* parent_node, uint16_t depth) {
+
     uint16_t* Cp{Sp+1};
-    const int n_parent{Ep-Sp};
+    const uint16_t n_parent{uint16_t(Ep-Sp)};
     
     if(
          n_parent<=p_minnode || depth>=p_depth || !two_more_nodes()  ||   //if this node should no be tried splitted
@@ -595,7 +620,6 @@ bool forest_lake::recsplit(
         #endif
 
         std::sort(Sp,Ep,[x](size_t i1, size_t i2) {return x[i1] < x [i2];}); //sort by x feature column
-        
         #ifdef testpc
         sortTimer.stop();
         #endif
@@ -723,3 +747,39 @@ float forest_lake::predict(dynamic_array<float,uint16_t>* X,uint16_t i_row){
     uint16_t j=0;
     for(auto& i : vec) i = forest_lake::predict(X,j++);
 }
+
+
+uint16_t* RadixSort(uint16_t * a, size_t count) {
+  size_t mIndex[2][256] = {0};            // count / index matrix
+  uint16_t * b = new uint16_t [count];    // allocate temp array
+  size_t i,j,m,n;
+  uint16_t u;
+  for(i = 0; i < count; i++){         // generate histograms
+    u = a[i];
+    for(j = 0; j < 2; j++){
+      mIndex[j][(size_t)(u & 0xff)]++;
+      u >>= 8;
+    }       
+  }
+  for(j = 0; j < 2; j++){             // convert to indices
+    m = 0;
+    for(i = 0; i < 256; i++){
+      n = mIndex[j][i];
+      mIndex[j][i] = m;
+      m += n;
+    }       
+  }
+  for(j = 0; j < 2; j++){             // radix sort
+    for(i = 0; i < count; i++){     //  sort by current lsb
+      u = a[i];
+      m = (size_t)(u>>(j<<3))&0xff;
+      b[mIndex[j][m]++] = u;
+    }
+    std::swap(a, b);                //  swap ptrs
+  }
+  delete[] b;
+  return(a);
+}
+
+
+void my_shuff(uint16_t* begin, uint16_t* end) {std::shuffle(begin,end,rng);}

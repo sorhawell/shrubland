@@ -17,13 +17,12 @@ using namespace std;
 CPUtimer Timer;
 
 
+
 constexpr int ntree=50;
 constexpr int nnode=50*300;
 constexpr int nrow =1000;
 constexpr int ncol =6;
 constexpr int ycol =5;
-
-
 
 
 forest_lake forlake(uint16_t(12000));
@@ -37,12 +36,32 @@ dynamic_vector<float,uint16_t> y = X.get_vector(ycol); //
 dynamic_vector<float,uint16_t> y_test = X_test.get_vector(ycol); //
 dynamic_array<float,uint16_t> y_pred_arr(n_train,1);
 dynamic_vector<float,uint16_t> y_pred = y_pred_arr.get_vector(0);
+
+dynamic_array<uint16_t,uint16_t> radArr(10000,1);
+dynamic_vector<uint16_t,uint16_t> radVec = radArr.get_vector(0);
     
 
 int n_trials{0};
 constexpr int nval = nrow*ncol;
 float sum_time{0};
 int main() {
+    
+
+    //radix test
+    /* Timer.setFreq();
+    Timer.reset_sumTime();
+    iota(radVec.begin(),radVec.end(),0);
+    radVec.print();
+    for(int i=0;i<10;i++){
+    my_shuff(radVec.begin(),radVec.end());
+    Timer.start();
+    RadixSort(radVec.begin(),radVec.get_size());
+    //std::sort(radVec.begin(),radVec.end());
+    Timer.stop();
+    sprintln(float(Timer.elapsedTime/1000));sprintln(float(Timer.sumTime/1000));
+    }
+    sprint(" sort:"); sprintln(float(Timer.sumTime/1000));
+    radVec.print(); */
 
     
     sprintln(42);
@@ -53,15 +72,20 @@ int main() {
     
      //std::shared_ptr<dynamic_array<double,int>> sp3(new dynamic_array<double,int>(5,10), array_deleter<dynamic_array<double,int>>());
     //std::cout << "\n ncopy:" <<sp3.use_count();
-    Timer.setFreq();
     
-    int startTime;
-    int endTime;
-    Timer.reset_sumTime();
+    
+
+    forlake.pre_index_features(&X);
+    sprint("survived to here");
+    sprintln(forlake.index_fixed.at(0,0));
+    sprintln(forlake.index_fixed.at(1,1));
+    //forlake.index_fixed.print();
+
     while(n_trials<25) {
         n_trials++;
         Timer.reset_sumTime();
         Timer.start();
+        
         forlake.truncate();
         forlake.rec_grow(&X,&y);
         

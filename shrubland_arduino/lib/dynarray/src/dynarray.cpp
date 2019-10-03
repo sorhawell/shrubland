@@ -112,11 +112,14 @@ T dynamic_vector<T,S>::next() {
 
 template <class T, class S>
 void dynamic_vector<T,S>::print() {
-   sprint("\n size:");
-   sprintln(sz);
-   for(S i =0; i<5&&i<sz; i++) {
-        sprint(i);
+    constexpr S num_per_line{10};
+    const S print_limit = (sz<50 ? sz:50);
+    sprint("\n size: ");sprintln(sz);
+    for(S i =0; i<print_limit; i++) {
+        sprint(get(i));sprint("\t ");
+        if((i+1)%num_per_line==0 && i+1!=print_limit) sprint("\n");
     }
+    if(sz!=print_limit) sprint(". . .");;
 }
 
 template <class T, class S>
@@ -133,6 +136,13 @@ template <class T, class S>
 S dynamic_vector<T,S>::get_size() {
     return(sz);
 }
+
+///dynamic_array
+
+template <class T, class S>
+dynamic_array<T,S>::dynamic_array():
+    dyn_array(nullptr), ownership(false), n_row(0), n_col(0),
+    sz(0), j_col(0), j_row(0), j(0) {};
 
 template <class T, class S>
 dynamic_array<T,S>::dynamic_array(T* begin, S size, S ncol):
@@ -152,7 +162,7 @@ template <class T, class S>
 dynamic_array<T,S>::~dynamic_array() {
     //sprint("\n dynarray deleted");
     if(ownership) {
-        //sprint("with ownership to heap");
+        //sprint("\n delete on heap");sprintln(j_col);;sprintln(sz);
         delete[] dyn_array;
     }
     
@@ -225,7 +235,10 @@ dynamic_array<T,S>& dynamic_array<T,S>::operator = (const dynamic_array<T,S>& t)
 
 }
 
-
+template <class T, class S>
+void dynamic_array<T,S>::release_ownership() {
+    ownership=false;
+};
 
 template <class T, class S>
 T dynamic_array<T,S>::at(S i_row,S i_col) {
